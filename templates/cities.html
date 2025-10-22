@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block title %}Города для обмена{% endblock %}
+{% block content %}
+<h1>🌍 Города для обмена</h1>
+<div class="city-list">
+  {% for country, cities in countries.items() %}
+  <div class="country-block">
+    <h2>{{ country }}</h2>
+    <ul>
+      {% for city in cities %}
+      <li>{{ city }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

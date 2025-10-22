@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Создать заявку</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  const user = tg.initDataUnsafe?.user;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector("form");
+
+    if (user && form) {
+      // Создаём скрытые поля с данными о пользователе
+      const fields = {
+        user_id: user.id || "",
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        username: user.username || ""
+      };
+
+      for (const [name, value] of Object.entries(fields)) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+    }
+  });
+</script>
+
+  <main class="card">
+    <h2>Создайте заявку</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash">
+          {% for cat, msg in messages %}
+            <div class="flash-item {{cat}}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" id="exchangeForm" action="{{ url_for('create') }}">
+      <label>Страна</label>
+      <select name="country" id="country" required>
+        <option value="" selected disabled>Выберите страну</option>
+        {% for c in countries %}
+          <option value="{{c}}" {% if form and form.country==c %} selected {% endif %}>{{c}}</option>
+        {% endfor %}
+      </select>
+
+      <label>Отдаёте валюту</label>
+      <select name="give_currency" id="give_currency" required>
+        <option value="" selected disabled>Выберите валюту</option>
+      </select>
+
+      <label>Получаете валюту</label>
+      <select name="get_currency" id="get_currency" required>
+        <option value="" selected disabled>Выберите валюту</option>
+      </select>
+
+      <label>Город</label>
+      <select name="city" id="city" required>
+        <option value="" selected disabled>Выберите город</option>
+      </select>
+
+      <label>ФИО</label>
+      <input type="text" name="fullname" id="fullname" value="{{ form.fullname if form else '' }}" required>
+
+      <label>Почта</label>
+      <input type="text" name="email" id="email" value="{{ form.email if form else '' }}" required>
+
+      <label>Дата и время посещения офиса</label>
+      <input type="datetime-local" name="datetime" id="datetime" value="{{ form.datetime if form else '' }}" required>
+
+      <button type="submit" class="btn">Подтвердить заявку</button>
+    </form>
+  </main>
+
+  <div id="notification-container"></div>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

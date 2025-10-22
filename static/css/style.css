@@ -1,0 +1,318 @@
+:root {
+  --bg: #0d0d0d;
+  --card: #1c1c1f;
+  --accent: #8b5cf6;
+  --muted: #bdb8c9;
+  --white: #ffffff;
+  --gray: #161616;
+  --red: #e45865;
+  --blue: #3b82f6;
+  --blue2: #6ba4ff;
+  --purple: #b88aff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  color: var(--white);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* ===== Главная карточка ===== */
+main.card {
+  width: 100%;
+  max-width: 500px;
+  padding: 30px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(28,28,31,0.95), rgba(18,18,20,0.95));
+  box-shadow: 0 8px 30px rgba(139,92,246,0.12);
+}
+
+main.center {
+  text-align: center;
+}
+
+h1, h2 {
+  color: var(--accent);
+  margin: 0 0 16px 0;
+}
+
+p {
+  color: var(--muted);
+  margin: 6px 0 20px 0;
+}
+
+/* ===== Поля формы ===== */
+label {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 14px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="datetime-local"],
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #121214;
+  color: var(--white);
+  margin-top: 6px;
+  outline: none;
+  font-size: 15px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+/* ===== Кнопки ===== */
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--white);
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #7c3aed;
+}
+
+/* ===== Уведомления ===== */
+.flash {
+  margin: 10px 0;
+}
+
+.flash-item {
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.flash-item.error {
+  background: #36161a;
+  color: #ffb4b4;
+}
+
+#notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.notification {
+  background-color: #2a223a;
+  color: #ffdada;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  margin-bottom: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+.notification::before {
+  content: "⚠️";
+  font-size: 18px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Главное меню (кнопки на главной) ===== */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--white);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.menu-item::after {
+  content: "›";
+  font-size: 18px;
+  opacity: 0.5;
+}
+
+.menu-item:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.menu-item.purple {
+  background: linear-gradient(90deg, #603aa1, #643391);
+}
+
+/* ===== Нижняя навигация ===== */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  background: #121214;
+  border-top: 1px solid #1f1f1f;
+  padding: 12px 0;
+  border-radius: 14px 14px 0 0;
+  margin-top: 30px;
+}
+
+.bottom-nav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ===== Layout для внутренних страниц ===== */
+.page {
+  background-color: var(--bg);
+  color: var(--white);
+  max-width: 480px;
+  margin: auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.back-btn {
+  background: none;
+  color: var(--accent);
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: opacity 0.2s ease;
+}
+
+.back-btn:hover {
+  opacity: 0.7;
+}
+
+.page h1 {
+  color: var(--accent);
+  font-size: 22px;
+  margin-bottom: 15px;
+}
+
+.page p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ===== Список городов ===== */
+.city-list .country-block {
+  background: var(--gray);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.country-block h2 {
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+
+.country-block ul {
+  list-style: none;
+  padding-left: 10px;
+  margin: 0;
+}
+
+.country-block li {
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+/* ===== Кнопка поддержки ===== */
+.support-btn {
+  display: inline-block;
+  background: linear-gradient(90deg, #5b8aff, #6bafff);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 15px;
+  transition: opacity 0.25s ease;
+}
+
+.support-btn:hover {
+  opacity: 0.8;
+}
+
+/* ===== Мобильная адаптация ===== */
+@media (max-width: 600px) {
+  html, body {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  main.card {
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  input, select {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 15px;
+  }
+
+  h1, h2 {
+    font-size: 20px;
+  }
+
+  .menu-item {
+    font-size: 15px;
+    padding: 12px 16px;
+    width: 100%;
+  }
+
+  .bottom-nav {
+    font-size: 12px;
+  }
+}

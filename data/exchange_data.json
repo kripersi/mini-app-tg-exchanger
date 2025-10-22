@@ -1,0 +1,22 @@
+{
+  "data": {
+    "США": {
+      "code": "US",
+      "currencies_from_crypto": ["USDT", "BTC", "ETH"],
+      "currencies_from_fiat": ["USD"],
+      "cities": ["New York", "Los Angeles", "Houston"]
+    },
+    "ИНДИЯ": {
+      "code": "IN",
+      "currencies_from_crypto": ["USDT", "BTC"],
+      "currencies_from_fiat": ["INR"],
+      "cities": ["Mumbai", "Delhi", "Bangalore"]
+    },
+    "ЯПОНИЯ": {
+      "code": "JP",
+      "currencies_from_crypto": ["USDT", "BTC", "ETH"],
+      "currencies_from_fiat": ["JPY"],
+      "cities": ["Tokyo", "Osaka", "Kyoto"]
+    }
+  }
+}

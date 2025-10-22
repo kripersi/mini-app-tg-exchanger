@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# IDE и редакторы
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Системные и временные файлы
+.DS_Store
+Thumbs.db
+
+# SQL-модули
+sql/
+
+# Внешние библиотеки
+external_libraries/
+
+# Конфигурации и секреты
+.env
+*.sqlite3
