@@ -1,167 +1,106 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const countrySelect = document.getElementById('country');
-  const giveSelect = document.getElementById('give_currency');
-  const getSelect = document.getElementById('get_currency');
-  const citySelect = document.getElementById('city');
-  const fullnameInput = document.getElementById('fullname');
-  const emailInput = document.getElementById('email');
-  const datetimeInput = document.getElementById('datetime');
-  const form = document.getElementById('exchangeForm');
+// === Telegram Mini App integration ===
+const tg = window.Telegram?.WebApp;
+if (tg) tg.expand(); // разворачиваем WebApp на весь экран
 
-  let countryData = null;
+document.addEventListener("DOMContentLoaded", () => {
+  const countrySelect = document.getElementById("country");
+  const giveSelect = document.getElementById("give_currency");
+  const getSelect = document.getElementById("get_currency");
+  const citySelect = document.getElementById("city");
 
-  // Всплывающее уведомление
-  function showNotification(message) {
-    const container = document.getElementById('notification-container');
-    const note = document.createElement('div');
-    note.className = 'notification';
-    note.textContent = message;
-    container.appendChild(note);
-    setTimeout(() => note.remove(), 5000);
-  }
-
-  // Загрузка данных страны
-  async function updateFields(country) {
-    if (!country) return;
-    try {
-      const res = await fetch(`/api/country/${encodeURIComponent(country)}`);
-      const data = await res.json();
-      if (data.error) return;
-
-      countryData = data;
-
-      [giveSelect, getSelect, citySelect].forEach(sel => {
-        sel.innerHTML = '<option value="" selected disabled>Выберите...</option>';
-      });
-
-      const allCurrencies = [...new Set([...data.currencies_from_crypto, ...data.currencies_from_fiat])];
-      allCurrencies.forEach(cur => {
-        const opt = document.createElement('option');
-        opt.value = cur;
-        opt.textContent = cur;
-        giveSelect.appendChild(opt);
-      });
-
-      data.cities.forEach(city => {
-        const opt = document.createElement('option');
-        opt.value = city;
-        opt.textContent = city;
-        citySelect.appendChild(opt);
-      });
-    } catch (err) {
-      console.error('Ошибка при загрузке данных страны:', err);
-    }
-  }
-
-  // Обновление валюты "получаете"
-  function updateReceiveCurrencies() {
-    if (!countryData || !giveSelect.value) return;
-
-    const cryptoSet = new Set(countryData.currencies_from_crypto);
-    const fiatSet = new Set(countryData.currencies_from_fiat);
-
-    let available = [];
-
-    if (cryptoSet.has(giveSelect.value)) {
-      available = [...fiatSet];
-    } else if (fiatSet.has(giveSelect.value)) {
-      available = [...cryptoSet];
+  // ======== ПРИВЕТСТВИЕ ПОЛЬЗОВАТЕЛЯ ========
+  const user = tg?.initDataUnsafe?.user;
+  if (user) {
+    const greetingContainer = document.getElementById("greeting-container");
+    if (greetingContainer) {
+      greetingContainer.innerHTML = `<b>${user.first_name || user.username || "гость"}</b>`;
     }
 
-    getSelect.innerHTML = '<option value="" selected disabled>Выберите...</option>';
-    available.forEach(cur => {
-      if (cur !== giveSelect.value) {
-        const opt = document.createElement('option');
-        opt.value = cur;
-        opt.textContent = cur;
-        getSelect.appendChild(opt);
+    // автоматом заполняем скрытые поля формы
+    const userIdInput = document.querySelector('input[name="user_id"]');
+    const firstNameInput = document.querySelector('input[name="first_name"]');
+    const lastNameInput = document.querySelector('input[name="last_name"]');
+    const usernameInput = document.querySelector('input[name="username"]');
+
+    if (userIdInput) userIdInput.value = user.id;
+    if (firstNameInput) firstNameInput.value = user.first_name || "";
+    if (lastNameInput) lastNameInput.value = user.last_name || "";
+    if (usernameInput) usernameInput.value = user.username || "";
+  }
+
+  // ======== ОБРАБОТКА ВЫБОРА СТРАНЫ ========
+  if (countrySelect) {
+    countrySelect.addEventListener("change", async () => {
+      const country = countrySelect.value;
+      if (!country) return;
+
+      const response = await fetch(`/api/country/${country}`);
+      if (!response.ok) {
+        console.error("Ошибка загрузки страны:", country);
+        return;
       }
+
+      const data = await response.json();
+      updateSelects(data);
     });
   }
 
-  // Проверка email
-  function validateEmail(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email.trim());
+  // ======== ОБНОВЛЕНИЕ СПИСКОВ ВАЛЮТ И ГОРОДОВ ========
+  function updateSelects(data) {
+    giveSelect.innerHTML = "";
+    getSelect.innerHTML = "";
+    citySelect.innerHTML = "";
+
+    const allCurrencies = [
+      ...data.currencies_from_crypto,
+      ...data.currencies_from_fiat,
+    ];
+
+    allCurrencies.forEach((cur) => {
+      const opt1 = document.createElement("option");
+      opt1.value = cur;
+      opt1.textContent = cur;
+      giveSelect.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = cur;
+      opt2.textContent = cur;
+      getSelect.appendChild(opt2);
+    });
+
+    data.cities.forEach((city) => {
+      const opt = document.createElement("option");
+      opt.value = city;
+      opt.textContent = city;
+      citySelect.appendChild(opt);
+    });
   }
 
-  // Проверка даты
-  function validateDate() {
-      const inputValue = datetimeInput.value;
-      if (!inputValue) {
-        showNotification("Укажите дату и время визита.");
-        return false;
+  // ======== ЗАПРЕТ ОДИНАКОВЫХ ВАЛЮТ ========
+  if (giveSelect && getSelect) {
+    const validateCurrencies = () => {
+      if (giveSelect.value && getSelect.value && giveSelect.value === getSelect.value) {
+        showNotification("Нельзя обменивать одинаковые валюты!");
       }
-
-      const inputDate = new Date(inputValue);
-      const now = new Date();
-      const oneYearLater = new Date();
-      oneYearLater.setFullYear(now.getFullYear() + 1);
-
-      // Проверка: валидна ли дата вообще
-      if (isNaN(inputDate.getTime())) {
-        showNotification("Неверный формат даты. Пожалуйста, выберите корректную дату.");
-        return false;
-      }
-
-      if (inputDate <= now) {
-        showNotification(`Значение должно быть ${now.toLocaleString()} или позже.`);
-        return false;
-      }
-
-      if (inputDate > oneYearLater) {
-        showNotification("Дата визита не может быть позже чем через год.");
-        return false;
-      }
-
-      return true;
-    }
-
-
-  // Проверка ФИО
-  function validateFullname(name) {
-    const cleaned = name.trim();
-    const validChars = /^[А-Яа-яЁёA-Za-z\s]+$/;
-    if (!validChars.test(cleaned)) {
-      showNotification("ФИО должно содержать только буквы и пробелы.");
-      return false;
-    }
-
-    const words = cleaned.split(/\s+/);
-    if (words.length !== 3) {
-      showNotification("ФИО должно состоять из трёх слов (например: Иванов Иван Иванович).");
-      return false;
-    }
-
-    return true;
+    };
+    giveSelect.addEventListener("change", validateCurrencies);
+    getSelect.addEventListener("change", validateCurrencies);
   }
 
-  // Проверка перед отправкой
-  form.addEventListener('submit', e => {
-    if (giveSelect.value === getSelect.value) {
-      e.preventDefault();
-      showNotification("Нельзя обменивать одинаковые валюты!");
-      return;
+  // ======== УВЕДОМЛЕНИЯ ========
+  function showNotification(message) {
+    let container = document.getElementById("notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "notification-container";
+      document.body.appendChild(container);
     }
 
-    if (!validateFullname(fullnameInput.value)) {
-      e.preventDefault();
-      return;
-    }
+    const notif = document.createElement("div");
+    notif.classList.add("notification");
+    notif.textContent = message;
 
-    if (!validateEmail(emailInput.value)) {
-      e.preventDefault();
-      showNotification("Введите корректный email с символом '@'.");
-      return;
-    }
-
-    if (!validateDate()) {
-      e.preventDefault();
-      return;
-    }
-  });
-
-  // События
-  countrySelect.addEventListener('change', e => updateFields(e.target.value));
-  giveSelect.addEventListener('change', updateReceiveCurrencies);
+    container.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+  }
 });

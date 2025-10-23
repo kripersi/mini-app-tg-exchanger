@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-  <div class="page">
-    <button class="back-btn" onclick="history.back()">← Назад</button>
-    <div class="content">
-      {% block content %}{% endblock %}
+
+<div class="page">
+    <div class="header-bar">
+        <button class="back-btn" onclick="history.back()">← Назад</button>
+        <div id="greeting-container" class="greeting-bar"></div>
     </div>
-  </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

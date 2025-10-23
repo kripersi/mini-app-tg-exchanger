@@ -1,45 +1,12 @@
-import json
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from config import *
+from flask import Flask, render_template, request, jsonify, flash
+from datetime import datetime
+from sql.sql import SQL
+from sql.sql_model import Country, ExchangeRequest
 
-app = Flask(
-    __name__,
-    static_folder=STATIC_FOLDER,
-    template_folder=TEMPLATE_FOLDER
-)
+app = Flask(__name__)
+app.secret_key = "secret123"
 
-
-def load_exchange_data():
-    """
-    Открывает файл .json и возвращает dict с ключом 'data' распакованным.
-    Если файл некорректен или нет ключа 'data' — возвращает пустой dict.
-    """
-    try:
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            payload = json.load(f)
-        # ожидаем структуру { "data": { "США": {...}, ... } }
-        if isinstance(payload, dict) and 'data' in payload and isinstance(payload['data'], dict):
-            return payload['data']
-        # если пользователь положил уже просто { "США": {...} }
-        if isinstance(payload, dict):
-            return payload
-    except Exception as e:
-        print("Ошибка загрузки exchange_data.json:", e)
-    return {}
-
-
-def save_request(payload: dict):
-    requests = []
-    if os.path.exists(REQUESTS_FILE):
-        with open(REQUESTS_FILE, 'r', encoding='utf-8') as f:
-            try:
-                requests = json.load(f)
-            except json.JSONDecodeError:
-                requests = []
-    requests.append(payload)
-    with open(REQUESTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(requests, f, ensure_ascii=False, indent=2)
-
+# ---------- СТРАНИЦЫ ----------
 
 @app.route('/')
 def index():
@@ -48,11 +15,7 @@ def index():
 
 @app.route('/cities')
 def cities():
-    countries = {
-        "США": ["New York", "Los Angeles", "Houston"],
-        "Индия": ["Delhi", "Mumbai", "Bangalore"],
-        "Япония": ["Tokyo", "Osaka", "Kyoto"]
-    }
+    countries = db.get_all_countries()
     return render_template('cities.html', countries=countries)
 
 
@@ -71,13 +34,14 @@ def support():
     return render_template('support.html')
 
 
+# ---------- ФОРМА ЗАЯВКИ ----------
+
 @app.route('/create', methods=['GET', 'POST'])
 def create():
-    data = load_exchange_data()
-    countries = list(data.keys())
+    countries = db.get_all_countries()
 
     if request.method == 'POST':
-        country = request.form.get('country')
+        country_name = request.form.get('country')
         give_currency = request.form.get('give_currency')
         get_currency = request.form.get('get_currency')
         city = request.form.get('city')
@@ -93,27 +57,21 @@ def create():
         }
 
         errors = []
+        country = db.get_country_by_name(country_name)
 
-        # проверка страны
-        if country not in data:
-            errors.append("Выбрана неверная страна.")
+        if not country:
+            errors.append("Неверная страна.")
         else:
-            crypto = data[country].get("currencies_from_crypto", [])
-            fiat = data[country].get("currencies_from_fiat", [])
-            allowed_currencies = set(crypto + fiat)
-            allowed_cities = set(data[country]["cities"])
-
-            if give_currency not in allowed_currencies:
+            allowed = set(country.currencies_from_crypto + country.currencies_from_fiat)
+            if give_currency not in allowed:
                 errors.append("Недопустимая валюта (отдаете).")
-            if get_currency not in allowed_currencies:
+            if get_currency not in allowed:
                 errors.append("Недопустимая валюта (получаете).")
-            if city not in allowed_cities:
-                errors.append("Неверный город для этой страны.")
+            if city not in country.cities:
+                errors.append("Неверный город.")
 
-        # новая проверка: нельзя обменять одинаковые валюты
-        if give_currency == get_currency and give_currency is not None:
+        if give_currency == get_currency:
             errors.append("Нельзя обменивать одинаковые валюты!")
-
         if not fullname:
             errors.append("Введите ФИО.")
         if not email:
@@ -124,40 +82,62 @@ def create():
         if errors:
             for e in errors:
                 flash(e, "error")
-            return render_template('form.html', countries=countries, data=data, form=request.form)
+            return render_template('form.html', countries=countries, form=request.form)
 
-        payload = {
-            "country": country,
+        try:
+            visit_dt = datetime.fromisoformat(datetime_visit)
+        except ValueError:
+            flash("Неверный формат даты и времени.", "error")
+            return render_template('form.html', countries=countries, form=request.form)
+
+        req = ExchangeRequest(
+            country_id=country.id,
+            give_currency=give_currency,
+            get_currency=get_currency,
+            city=city,
+            fullname=fullname,
+            email=email,
+            datetime=visit_dt,
+            user_id=user_data.get("user_id"),
+            first_name=user_data.get("first_name"),
+            last_name=user_data.get("last_name"),
+            username=user_data.get("username")
+        )
+
+        db.add_request(req)
+
+        return render_template('success.html', data={
+            "country": country_name,
             "give_currency": give_currency,
             "get_currency": get_currency,
             "city": city,
             "fullname": fullname,
             "email": email,
-            "datetime": datetime_visit,
-            "user": user_data
-        }
+            "datetime": datetime_visit
+        })
 
-        save_request(payload)
-        return render_template('success.html', data=payload)
-
-    return render_template('form.html', countries=countries, data=data)
+    return render_template('form.html', countries=countries)
 
 
-@app.route('/api/country/<country>')
-def get_country_data(country):
-    data = load_exchange_data()
+# ---------- API ----------
 
-    if country not in data:
-        return jsonify({"error": "Страна не найдена", "available": list(data.keys())}), 404
+@app.route('/api/country/<name>')
+def get_country(name):
+    country = db.get_country_by_name(name)
+    if not country:
+        return jsonify({"error": "Страна не найдена"}), 404
 
-    country_data = data[country]
     return jsonify({
-        "code": country_data.get("code"),
-        "cities": country_data.get("cities", []),
-        "currencies_from_crypto": country_data.get("currencies_from_crypto", []),
-        "currencies_from_fiat": country_data.get("currencies_from_fiat", [])
+        "name": country.name,
+        "code": country.code,
+        "currencies_from_crypto": country.currencies_from_crypto,
+        "currencies_from_fiat": country.currencies_from_fiat,
+        "cities": country.cities
     })
 
 
 if __name__ == '__main__':
+    db = SQL()
+    db.seed_countries()
+
     app.run(debug=True)

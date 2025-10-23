@@ -7,7 +7,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 from aiogram.client.default import DefaultBotProperties
 
-bot = Bot(token='1111111111111111111111111111111111111111',
+bot = Bot(token='11111111111111111111',
           default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 
