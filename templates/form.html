@@ -4,62 +4,76 @@
 
 {% block content %}
 <main class="card center">
-  <h2>Создайте заявку</h2>
+    <h2>Создайте заявку</h2>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div class="flash">
-        {% for cat, msg in messages %}
-          <div class="flash-item {{ cat }}">{{ msg }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+    <!-- Контейнер для ошибок -->
+    <div id="form-errors">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat, msg in messages %}
+            <div class="flash-item {{ cat }}">{{ msg }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
 
-  <form method="post" id="exchangeForm" action="{{ url_for('create') }}">
-    <label>Страна</label>
-    <select name="country" id="country" required>
-      <option value="" selected disabled>Выберите страну</option>
-      {% for c in countries %}
-        <option value="{{ c.name }}" {% if form and form.country == c.name %} selected {% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
+    <form method="post" id="exchangeForm" action="{{ url_for('create') }}">
+        <label>Страна</label>
+        <select name="country" id="country" required>
+            <option value="" selected disabled>Выберите страну</option>
+            {% for c in countries %}
+            <option value="{{ c.name }}" {% if form and form.country == c.name %} selected {% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
 
-    <label>Отдаёте валюту</label>
-    <select name="give_currency" id="give_currency" required>
-      <option value="" selected disabled>Выберите валюту</option>
-    </select>
+        <label>Отдаёте валюту</label>
+        <select name="give_currency" id="give_currency" required>
+            <option value="" selected disabled>Выберите валюту</option>
+        </select>
 
-    <label>Получаете валюту</label>
-    <select name="get_currency" id="get_currency" required>
-      <option value="" selected disabled>Выберите валюту</option>
-    </select>
+        <label>Получаете валюту</label>
+        <select name="get_currency" id="get_currency" required>
+            <option value="" selected disabled>Выберите валюту</option>
+        </select>
 
-    <label>Город</label>
-    <select name="city" id="city" required>
-      <option value="" selected disabled>Выберите город</option>
-    </select>
+        <div id="exchange-section" style="display: none;">
+            <label for="give-amount">Отдаёте:</label>
+            <input type="number" step="any" id="give-amount" name="give_amount" placeholder="Введите сумму"
+                   value="{{ form.give_amount if form else '' }}" required>
+            <div id="amount-warning"></div>
 
-    <label>ФИО</label>
-    <input type="text" name="fullname" id="fullname"
-           value="{{ form.fullname if form else '' }}" required>
+            <label for="get-amount">Получаете:</label>
+            <input type="number" step="any" id="get-amount" placeholder="Рассчитается автоматически">
 
-    <label>Почта</label>
-    <input type="email" name="email" id="email"
-           value="{{ form.email if form else '' }}" required>
+            <p id="rate-info"></p>
+        </div>
 
-    <label>Дата и время посещения офиса</label>
-    <input type="datetime-local" name="datetime" id="datetime"
-           value="{{ form.datetime if form else '' }}" required>
+        <label>Город</label>
+        <select name="city" id="city" required>
+            <option value="" selected disabled>Выберите город</option>
+        </select>
 
-    <!-- Скрытые данные пользователя (автозаполняются из Telegram WebApp) -->
-    <input type="hidden" name="user_id">
-    <input type="hidden" name="first_name">
-    <input type="hidden" name="last_name">
-    <input type="hidden" name="username">
+        <label>ФИО</label>
+        <input type="text" name="fullname" id="fullname"
+               value="{{ form.fullname if form else '' }}" required>
 
-    <button type="submit" class="btn">Подтвердить заявку</button>
-  </form>
+        <label>Почта</label>
+        <input type="email" name="email" id="email"
+               value="{{ form.email if form else '' }}" required>
+
+        <label>Дата и время посещения офиса</label>
+        <input type="datetime-local" name="datetime" id="datetime"
+               value="{{ form.datetime if form else '' }}" required>
+        <div id="datetime-warning"></div>
+
+        <!-- Скрытые данные пользователя -->
+        <input type="hidden" name="user_id" value="{{ form.user_id if form else '' }}">
+        <input type="hidden" name="first_name" value="{{ form.first_name if form else '' }}">
+        <input type="hidden" name="last_name" value="{{ form.last_name if form else '' }}">
+        <input type="hidden" name="username" value="{{ form.username if form else '' }}">
+
+        <button type="submit" class="btn">Подтвердить заявку</button>
+    </form>
 </main>
 
 <div id="notification-container"></div>

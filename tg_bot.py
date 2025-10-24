@@ -6,8 +6,9 @@ from aiogram.types import WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 from aiogram.client.default import DefaultBotProperties
+from config import TG_API_KEY
 
-bot = Bot(token='11111111111111111111',
+bot = Bot(token=TG_API_KEY,
           default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 
