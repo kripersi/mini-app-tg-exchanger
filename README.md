@@ -26,7 +26,6 @@ mini-app-tg-exchanger — это современное веб-приложен�
 
 1. Клонируй репозиторий:
    git clone https://github.com/kripersi/mini-app-tg-exchanger.git
-   cd exchangebot
 
 2. Установи зависимости:
    pip install -r requirements.txt
