@@ -13,7 +13,6 @@ from utils.validation_utils import (
     validate_country_and_currencies,
     validate_amount_limits
 )
-from utils.currency_utils import normalize_currency
 
 # ---------- ИНИЦИАЛИЗАЦИЯ ----------
 app = Flask(__name__)
@@ -165,9 +164,6 @@ def get_rate():
         return jsonify({"error": "Укажите валюты"}), 400
     if give == get:
         return jsonify({"error": "Валюты не могут совпадать"}), 400
-
-    give = normalize_currency(give)
-    get = normalize_currency(get)
 
     with db.Session() as session:
         rate_data = find_best_rate(session, give, get)

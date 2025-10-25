@@ -25,50 +25,51 @@ def find_best_rate(session, give, get, bridge="USDT"):
     if (give, get) in equivalent:
         return {"rate": equivalent[(give, get)]}
 
-    pair = f"{give}/{get}"
-    reverse_pair = f"{get}/{give}"
+    # Заменяем эквиваленты на мостовую валюту для дальнейших расчётов
+    give_normalized = "USDT" if give == "USD" else give
+    get_normalized = "USDT" if get == "USD" else get
+
+    pair = f"{give_normalized}/{get_normalized}"
+    reverse_pair = f"{get_normalized}/{give_normalized}"
 
     # Прямой курс
     row = get_latest_rate(session, pair)
     if row and row["rate"]:
         return {"rate": row["rate"]}
 
-    # Обратный курс (инвертируем)
+    # Обратный курс
     row = get_latest_rate(session, reverse_pair)
     if row and row["rate"]:
-        rate = 1 / row["rate"]
-        return {"rate": rate}
+        return {"rate": 1 / row["rate"]}
 
-    # Через мост (give → bridge → get)
-    if bridge not in [give, get]:
-        give_to_bridge = get_latest_rate(session, f"{give}/{bridge}")
-        bridge_to_get = get_latest_rate(session, f"{bridge}/{get}")
+    # Через мост
+    if bridge not in [give_normalized, get_normalized]:
+        give_to_bridge = get_latest_rate(session, f"{give_normalized}/{bridge}")
+        bridge_to_get = get_latest_rate(session, f"{bridge}/{get_normalized}")
         if give_to_bridge and bridge_to_get:
             rate = give_to_bridge["rate"] * bridge_to_get["rate"]
             return {"rate": rate}
 
-    # Через мост, если одна из валют = мост (например, USDT→ETH или ETH→USDT)
-    # USDT→ETH (используем ETH/USDT)
-    if give == bridge:
-        direct = get_latest_rate(session, f"{get}/{bridge}")
+    # Через мост, если одна из валют = мост
+    if give_normalized == bridge:
+        direct = get_latest_rate(session, f"{get_normalized}/{bridge}")
         if direct and direct["rate"]:
-            rate = 1 / direct["rate"]
-            return {"rate": rate}
+            return {"rate": 1 / direct["rate"]}
 
-    # ETH→USDT
-    if get == bridge:
-        direct = get_latest_rate(session, f"{bridge}/{give}")
+    if get_normalized == bridge:
+        direct = get_latest_rate(session, f"{bridge}/{give_normalized}")
         if direct and direct["rate"]:
             return {"rate": direct["rate"]}
 
-    # Через мост, если есть оба направления (give->bridge и get->bridge)
-    give_to_bridge = get_latest_rate(session, f"{give}/{bridge}")
-    get_to_bridge = get_latest_rate(session, f"{get}/{bridge}")
+    # Через мост, если есть оба направления
+    give_to_bridge = get_latest_rate(session, f"{give_normalized}/{bridge}")
+    get_to_bridge = get_latest_rate(session, f"{get_normalized}/{bridge}")
     if give_to_bridge and get_to_bridge:
         rate = give_to_bridge["rate"] / get_to_bridge["rate"]
         return {"rate": rate}
 
     return None
+
 
 
 
