@@ -1,7 +1,12 @@
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
 from datetime import datetime
+
+import asyncio
+from tg_bot import notify_admins
+
 from sql.sql import SQL
 from sql.sql_model import Country, ExchangeRequest
+
 from utils.rate_utils import find_best_rate
 from utils.validation_utils import (
     validate_form_data,
@@ -55,7 +60,7 @@ def create():
         form = request.form
         errors = []
 
-        # 1. Базовая валидация данных формы
+        # 1. Базовая валидация
         validated = validate_form_data(form)
         if validated["errors"]:
             errors.extend(validated["errors"])
@@ -68,7 +73,7 @@ def create():
             else:
                 country = country_check["country"]
 
-        # 3. Проверка курса и лимитов
+        # 3. Проверка лимитов
         if not errors:
             amount_check = validate_amount_limits(db, form)
             if amount_check["errors"]:
@@ -76,22 +81,20 @@ def create():
             else:
                 give_amount = amount_check["amount"]
 
-        # Если есть ошибки — возвращаем форму обратно
+        # 4. Обработка ошибок
         if errors:
             for e in errors:
                 flash(e, "error")
             return render_template('form.html', countries=countries, form=form)
 
-        # 4. Сохранение заявки
+        # 5. Сохранение заявки
         try:
             visit_dt = datetime.fromisoformat(form.get('datetime'))
         except ValueError:
             flash("Неверный формат даты и времени.", "error")
             return render_template('form.html', countries=countries, form=form)
 
-        give_amount = float(form.get("give_amount").replace(",", "."))
         get_amount = float(form.get("get_amount").replace(",", "."))
-
         req = ExchangeRequest(
             country_id=country.id,
             give_currency=form.get("give_currency"),
@@ -110,34 +113,29 @@ def create():
 
         db.add_request(req)
 
-        # Сохраняем данные в session и перенаправляем
-        session["success_data"] = {
-            "country": form.get('country'),
-            "give_currency": form.get('give_currency'),
-            "get_currency": form.get('get_currency'),
-            "city": form.get('city'),
-            "fullname": form.get('fullname'),
-            "email": form.get('email'),
-            "datetime": form.get('datetime')
-        }
-
-        return render_template('success.html', data={
-            "country": form.get('country'),
-            "give_currency": form.get('give_currency'),
-            "get_currency": form.get('get_currency'),
-            "city": form.get('city'),
-            "fullname": form.get('fullname'),
-            "email": form.get('email'),
-            "datetime": form.get('datetime'),
-            "user": {
-                "id": form.get("user_id"),
-                "first_name": form.get("first_name"),
-                "last_name": form.get("last_name"),
-                "username": form.get("username")
+        # 6. Формирование и отправка уведомления
+        data = {
+                "country": form.get("country"),
+                "give_currency": form.get("give_currency"),
+                "get_currency": form.get("get_currency"),
+                "city": form.get("city"),
+                "fullname": form.get("fullname"),
+                "email": form.get("email"),
+                "datetime": form.get("datetime"),
+                "user": {
+                    "id": form.get("user_id"),
+                    "first_name": form.get("first_name"),
+                    "last_name": form.get("last_name"),
+                    "username": form.get("username")
+                }
             }
-        })
+        asyncio.run(notify_admins(data))
 
-    return render_template('form.html', countries=countries)
+        # 7. Отображение успеха
+        session["success_data"] = data
+        return render_template("success.html", data=data)
+
+    return render_template("form.html", countries=countries)
 
 
 # ---------- API ----------

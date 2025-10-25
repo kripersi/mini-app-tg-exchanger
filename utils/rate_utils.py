@@ -17,6 +17,14 @@ def find_best_rate(session, give, get, bridge="USDT"):
     if give == get:
         return None
 
+    # Обработка эквивалентных валют
+    equivalent = {
+        ("USD", "USDT"): 1.0,
+        ("USDT", "USD"): 1.0
+    }
+    if (give, get) in equivalent:
+        return {"rate": equivalent[(give, get)]}
+
     pair = f"{give}/{get}"
     reverse_pair = f"{get}/{give}"
 

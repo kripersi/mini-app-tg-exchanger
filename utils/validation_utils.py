@@ -49,20 +49,22 @@ def validate_amount_limits(db, form):
         return {"errors": ["Введите корректную сумму."]}
 
     give_currency = form.get("give_currency")
-
     min_usdt = 5
     max_usdt = 100000
 
-    with db.Session() as session:
-        rate_data = find_best_rate(session, give_currency, "USDT")
-        if not rate_data or not rate_data.get("rate"):
-            return {"errors": ["Не удалось получить курс к USDT."]}
+    if give_currency == "USDT":
+        usdt_equivalent = amount
+    else:
+        with db.Session() as session:
+            rate_data = find_best_rate(session, give_currency, "USDT")
+            if not rate_data or not rate_data.get("rate"):
+                return {"errors": ["Не удалось получить курс к USDT."]}
+            usdt_equivalent = amount * rate_data["rate"]
 
-        usdt_equivalent = amount * rate_data["rate"]
-
-        if usdt_equivalent < min_usdt:
-            errors.append(f"Сумма слишком мала: минимум 5 USDT (у вас {usdt_equivalent:.4f})")
-        elif usdt_equivalent > max_usdt:
-            errors.append(f"Сумма слишком большая: максимум 100000 USDT (у вас {usdt_equivalent:.2f})")
+    if usdt_equivalent < min_usdt:
+        errors.append(f"Сумма слишком мала: минимум 5 USDT (у вас {usdt_equivalent:.4f})")
+    elif usdt_equivalent > max_usdt:
+        errors.append(f"Сумма слишком большая: максимум 100000 USDT (у вас {usdt_equivalent:.2f})")
 
     return {"errors": errors, "amount": amount}
+

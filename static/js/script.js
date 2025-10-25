@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (giveSelect.value !== "USDT") {
+    if (giveSelect.value !== "USDT" && giveSelect.value !== getSelect.value) {
       try {
         const res = await fetch(`/get_rate?give_currency=${giveSelect.value}&get_currency=USDT`);
         const data = await res.json();
