@@ -30,8 +30,7 @@ html, body {
 /* ===== Главная карточка ===== */
 main.card {
   width: 100%;
-  max-width: 800px;
-  min-height: 700px;
+  max-width: 500px;
   padding: 30px;
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(28,28,31,0.95), rgba(18,18,20,0.95));
@@ -39,6 +38,7 @@ main.card {
   overflow-wrap: break-word;
   word-break: break-word;
   overflow: hidden;
+  width: 400px;
 }
 
 main.center {

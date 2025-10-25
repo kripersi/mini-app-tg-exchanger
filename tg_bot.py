@@ -20,7 +20,7 @@ async def start(message: Message):
         text="Открыть мини-приложение",
         web_app=WebAppInfo(url="https://oogenetic-factiously-joycelyn.ngrok-free.dev/")  # тут ngrok для тестов
     )
-    await message.answer("Выбери:", reply_markup=builder.as_markup())
+    await message.answer("Мини-приложение:", reply_markup=builder.as_markup())
 
 
 @dp.message(F.web_app_data)

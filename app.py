@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, flash
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
 from datetime import datetime
 from sql.sql import SQL
 from sql.sql_model import Country, ExchangeRequest
@@ -110,7 +110,8 @@ def create():
 
         db.add_request(req)
 
-        return render_template('success.html', data={
+        # Сохраняем данные в session и перенаправляем
+        session["success_data"] = {
             "country": form.get('country'),
             "give_currency": form.get('give_currency'),
             "get_currency": form.get('get_currency'),
@@ -118,6 +119,22 @@ def create():
             "fullname": form.get('fullname'),
             "email": form.get('email'),
             "datetime": form.get('datetime')
+        }
+
+        return render_template('success.html', data={
+            "country": form.get('country'),
+            "give_currency": form.get('give_currency'),
+            "get_currency": form.get('get_currency'),
+            "city": form.get('city'),
+            "fullname": form.get('fullname'),
+            "email": form.get('email'),
+            "datetime": form.get('datetime'),
+            "user": {
+                "id": form.get("user_id"),
+                "first_name": form.get("first_name"),
+                "last_name": form.get("last_name"),
+                "username": form.get("username")
+            }
         })
 
     return render_template('form.html', countries=countries)
@@ -140,6 +157,7 @@ def get_country(name):
 
 
 # ---------- API: КУРСЫ ----------
+
 @app.route("/get_rate")
 def get_rate():
     give = request.args.get("give_currency")

@@ -14,6 +14,9 @@ def get_latest_rate(session, pair):
 
 
 def find_best_rate(session, give, get, bridge="USDT"):
+    if give == get:
+        return None
+
     pair = f"{give}/{get}"
     reverse_pair = f"{get}/{give}"
 
@@ -22,30 +25,42 @@ def find_best_rate(session, give, get, bridge="USDT"):
     if row and row["rate"]:
         return {"rate": row["rate"]}
 
-    # Обратный курс — инвертируем
+    # Обратный курс (инвертируем)
     row = get_latest_rate(session, reverse_pair)
     if row and row["rate"]:
         rate = 1 / row["rate"]
         return {"rate": rate}
 
-    # Через мост — give → bridge → get
-    give_to_bridge = get_latest_rate(session, f"{give}/{bridge}")
-    bridge_to_get = get_latest_rate(session, f"{bridge}/{get}")
-    if give_to_bridge and bridge_to_get:
-        return {"rate": give_to_bridge["rate"] * bridge_to_get["rate"]}
+    # Через мост (give → bridge → get)
+    if bridge not in [give, get]:
+        give_to_bridge = get_latest_rate(session, f"{give}/{bridge}")
+        bridge_to_get = get_latest_rate(session, f"{bridge}/{get}")
+        if give_to_bridge and bridge_to_get:
+            rate = give_to_bridge["rate"] * bridge_to_get["rate"]
+            return {"rate": rate}
 
-    # Через мост — bridge → give и get → bridge
-    bridge_to_give = get_latest_rate(session, f"{bridge}/{give}")
-    get_to_bridge = get_latest_rate(session, f"{get}/{bridge}")
-    if bridge_to_give and get_to_bridge:
-        return {"rate": (1 / bridge_to_give["rate"]) * (1 / get_to_bridge["rate"])}
+    # Через мост, если одна из валют = мост (например, USDT→ETH или ETH→USDT)
+    # USDT→ETH (используем ETH/USDT)
+    if give == bridge:
+        direct = get_latest_rate(session, f"{get}/{bridge}")
+        if direct and direct["rate"]:
+            rate = 1 / direct["rate"]
+            return {"rate": rate}
 
-    # Через мост — give → bridge и get → bridge
+    # ETH→USDT
+    if get == bridge:
+        direct = get_latest_rate(session, f"{bridge}/{give}")
+        if direct and direct["rate"]:
+            return {"rate": direct["rate"]}
+
+    # Через мост, если есть оба направления (give->bridge и get->bridge)
     give_to_bridge = get_latest_rate(session, f"{give}/{bridge}")
     get_to_bridge = get_latest_rate(session, f"{get}/{bridge}")
     if give_to_bridge and get_to_bridge:
-        return {"rate": give_to_bridge["rate"] / get_to_bridge["rate"]}
+        rate = give_to_bridge["rate"] / get_to_bridge["rate"]
+        return {"rate": rate}
 
     return None
+
 
 
