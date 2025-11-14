@@ -1,8 +1,8 @@
 # mini-app-tg-exchanger — Telegram WebApp для обмена валют
 ![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img.png)
-![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img1.png)
-![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img2.png)
-![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img3.png)
+![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img_1.png)
+![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img_2.png)
+![Фото](https://github.com/kripersi/mini-app-tg-exchanger/blob/main/screenshoots/img_3.png)
 
 mini-app-tg-exchanger — это современное веб-приложение, встроенное в Telegram, которое позволяет пользователям удобно и безопасно оформлять заявки на обмен валют. Поддерживаются криптовалюты, фиатные валюты и локальные города, с автоматическим расчётом курсов и проверкой лимитов.
 
