@@ -1,44 +1,37 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Exchange</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body>
-  <div class="app">
+{% extends "layout.html" %}
+
+{% block title %}О компании{% endblock %}
+
+{% block content %}
+<div class="app">
     <main>
-      <h1 class="welcome-title">Добро пожаловать!</h1>
+        <div class="menu">
+            <form action="/create" method="get">
+                <button class="menu-item purple" type="submit">
+                    🏦 Операции с USDT для юр. лиц
+                </button>
+            </form>
 
-      <div class="menu">
-        <form action="/create" method="get">
-          <button class="menu-item purple" type="submit">
-            🏦 Операции с USDT для юр. лиц
-          </button>
-        </form>
-
-        <button class="menu-item purple" onclick="location.href='/cities'">
-          🌍 Города для обмена
-        </button>
-        <button class="menu-item purple" onclick="location.href='/rules'">
-          📜 Правила обмена
-        </button>
-        <button class="menu-item purple" onclick="location.href='/about'">
-          ℹ️ О компании
-        </button>
-        <button class="menu-item purple" onclick="location.href='/support'">
-          💬 Чат с поддержкой
-        </button>
-      </div>
+            <button class="menu-item purple" onclick="location.href='/cities'">
+                🌍 Города для обмена
+            </button>
+            <button class="menu-item purple" onclick="location.href='/rules'">
+                📜 Правила обмена
+            </button>
+            <button class="menu-item purple" onclick="location.href='/about'">
+                ℹ️ О компании
+            </button>
+            <button class="menu-item purple" onclick="location.href='/support'">
+                💬 Чат с поддержкой
+            </button>
+        </div>
     </main>
 
     <nav class="bottom-nav">
-      <button onclick="location.href='/'">🏠 Главная</button>
-      <button onclick="location.href='/create'">💸 Обмен</button>
-      <button onclick="location.href='/rules'">📜 Правила</button>
-      <button onclick="location.href='/support'">❓ Вопрос</button>
+        <button onclick="location.href='/'">🏠 Главная</button>
+        <button onclick="location.href='/create'">💸 Обмен</button>
+        <button onclick="location.href='/rules'">📜 Правила</button>
+        <button onclick="location.href='/support'">❓ Вопрос</button>
     </nav>
-  </div>
-</body>
-</html>
+</div>
+{% endblock %}

@@ -2,10 +2,12 @@ from flask import Flask, render_template, request, jsonify, flash, redirect, url
 from datetime import datetime
 
 import asyncio
-from tg_bot import notify_admins
+from tg_bot import notify_admins, bot
+from aiogram.utils.deep_linking import create_start_link
 
 from sql.sql import SQL
-from sql.sql_model import Country, ExchangeRequest
+from sql.sql_model import Country, ExchangeRequest, Referral
+from sqlalchemy import select
 
 from utils.rate_utils import find_best_rate
 from utils.validation_utils import (
@@ -14,6 +16,8 @@ from utils.validation_utils import (
     validate_amount_limits
 )
 
+from config import NAME_BOT
+
 # ---------- ИНИЦИАЛИЗАЦИЯ ----------
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -21,6 +25,19 @@ app.secret_key = "secret123"
 # Создаём экземпляр SQL
 db = SQL()
 
+# dfs
+import asyncio
+import threading
+
+# создаём отдельный event loop
+bot_loop = asyncio.new_event_loop()
+
+def start_bot_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+# запускаем event loop в фоне
+threading.Thread(target=start_bot_loop, args=(bot_loop,), daemon=True).start()
 
 # ---------- СТРАНИЦЫ ----------
 
@@ -48,6 +65,21 @@ def about():
 @app.route('/support')
 def support():
     return render_template('support.html')
+
+
+@app.route("/cabinet")
+def cabinet():
+    return render_template("cabinet.html")
+
+
+@app.route("/history")
+def history_page():
+    return render_template("history.html")
+
+
+@app.route("/referral")
+def referral_page():
+    return render_template("referral.html")
 
 
 # ---------- ФОРМА ЗАЯВКИ ----------
@@ -153,8 +185,6 @@ def get_country(name):
     })
 
 
-# ---------- API: КУРСЫ ----------
-
 @app.route("/get_rate")
 def get_rate():
     give = request.args.get("give_currency")
@@ -172,6 +202,72 @@ def get_rate():
             return jsonify({"error": "Курс не найден"}), 404
 
         return jsonify(rate_data)
+
+
+@app.route("/api/history/<user_id>")
+def history(user_id):
+    with db.Session() as session:
+        stmt = (
+            select(ExchangeRequest)
+            .where(ExchangeRequest.user_id == user_id)
+            .order_by(ExchangeRequest.id.desc())
+        )
+        data = session.execute(stmt).scalars().all()
+
+        out = []
+        for r in data:
+            out.append({
+                "id": r.id,
+                "status": r.status,
+                "give_amount": r.give_amount,
+                "give_currency": r.give_currency,
+                "get_amount": r.get_amount,
+                "get_currency": r.get_currency,
+                "datetime": r.datetime.strftime("%Y-%m-%d %H:%M"),
+                "city": r.city
+            })
+
+        return jsonify(out)
+
+
+@app.route("/api/referral_link/<int:user_id>")
+def referral_link(user_id):
+    coro = create_start_link(bot, payload=str(user_id), encode=True)
+    future = asyncio.run_coroutine_threadsafe(coro, bot_loop)
+
+    try:
+        link = future.result(timeout=5)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"link": link})
+
+
+@app.route("/api/referral/<user_id>")
+def referral_info(user_id):
+    with db.Session() as session:
+        # Запрос на получение рефералов для данного пользователя
+        stmt = (
+            select(Referral)
+            .where(Referral.user_id == user_id)
+            .order_by(Referral.id.desc())
+        )
+        referrals = session.execute(stmt).scalars().all()
+
+        # Формирование списка рефералов
+        list_out = []
+        for r in referrals:
+            list_out.append({
+                "invited_id": r.invited_id,
+                "created_at": r.created_at.strftime("%Y-%m-%d %H:%M")  # Преобразуем дату в строку
+            })
+
+        # Возвращаем данные в формате JSON
+        return jsonify({
+            "link": f"https://t.me/{NAME_BOT}?start=ref_{user_id}",
+            "count": len(referrals),  # Количество приглашённых
+            "list": list_out  # Список приглашённых
+        })
 
 
 if __name__ == '__main__':

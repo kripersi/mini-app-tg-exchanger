@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block title %}Реферальная программа{% endblock %}
+
+{% block content %}
+<h1>Реферальная программа</h1>
+<div id="ref-info" class="country-block"></div>
+<h2>Приглашённые</h2>
+<div id="ref-list"></div>
+
+<script src="{{ url_for('static', filename='js/referral.js') }}"></script>
+
+{% endblock %}

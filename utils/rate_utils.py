@@ -2,7 +2,8 @@ from sqlalchemy import text
 
 
 def get_latest_rate(session, pair):
-    """Возвращает последнюю запись по валютной паре."""
+    """Возвращает курс по валютной паре, включая инверсию, если прямой пары нет."""
+    # Прямой запрос
     query = text("""
         SELECT rate
         FROM exchange_rates
@@ -10,7 +11,18 @@ def get_latest_rate(session, pair):
         ORDER BY updated_at DESC
         LIMIT 1
     """)
-    return session.execute(query, {"pair": pair}).mappings().first()
+    row = session.execute(query, {"pair": pair}).mappings().first()
+    if row:
+        return {"rate": row["rate"]}
+
+    # Попробуем обратную пару
+    base, quote = pair.split("/")
+    reverse_pair = f"{quote}/{base}"
+    reverse_row = session.execute(query, {"pair": reverse_pair}).mappings().first()
+    if reverse_row and reverse_row["rate"]:
+        return {"rate": 1 / reverse_row["rate"]}
+
+    return None
 
 
 def find_best_rate(session, give, get, bridge="USDT"):

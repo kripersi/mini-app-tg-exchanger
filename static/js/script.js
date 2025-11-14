@@ -1,7 +1,15 @@
 const tg = window.Telegram?.WebApp;
 if (tg) tg.expand();
 
+// === Проверка текущей страницы ===
 document.addEventListener("DOMContentLoaded", () => {
+  const navControl = document.getElementById("nav-control");
+  const isIndexPage = window.location.pathname === "/" || window.location.pathname.endsWith("/index");
+
+  if (isIndexPage && navControl) {
+    navControl.innerHTML = `<div class="greeting-bar">Главное меню</div>`;
+  }
+
   const countrySelect = document.getElementById("country");
   const giveSelect = document.getElementById("give_currency");
   const getSelect = document.getElementById("get_currency");

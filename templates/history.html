@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block title %}История сделок{% endblock %}
+
+{% block content %}
+<h1>История сделок</h1>
+<div id="history"></div>
+
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

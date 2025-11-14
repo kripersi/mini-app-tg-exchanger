@@ -10,9 +10,17 @@
 
 <div class="page">
     <div class="header-bar">
-        <button class="back-btn" onclick="history.back()">← Назад</button>
-        <div id="greeting-container" class="greeting-bar"></div>
+        <div id="nav-control">
+            <button class="back-btn" onclick="history.back()">← Назад</button>
+        </div>
+
+        <div class="greeting-bar">
+            {% if request.path != "/cabinet" %}
+            <button class="profile-btn" onclick="location.href='/cabinet'">👤</button>
+            {% endif %}
+        </div>
     </div>
+
 
     <div class="content">
         {% block content %}{% endblock %}

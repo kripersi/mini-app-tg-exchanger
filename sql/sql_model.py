@@ -17,7 +17,11 @@ class Country(Base):
     cities = Column(JSON, nullable=False)  # ["New York", "Los Angeles", ...]
 
     # Связь с заявками
-    requests = relationship("ExchangeRequest", back_populates="country_data")
+    requests = relationship(
+        "ExchangeRequest",
+        back_populates="country_data",
+        cascade="all, delete-orphan"
+    )
 
 
 # ---------- 2. Таблица заявок пользователей ----------
@@ -43,6 +47,9 @@ class ExchangeRequest(Base):
     last_name = Column(String)
     username = Column(String)
 
+    # статус сделки
+    status = Column(String, nullable=False, default="открыта")  # открыта, отменена, выполнена
+
     country_data = relationship("Country", back_populates="requests")
 
 
@@ -56,3 +63,11 @@ class ExchangeRate(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
+# ---------- 4. Рефералы ----------
+class Referral(Base):
+    __tablename__ = "referrals"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, nullable=False)  # кто приглашает
+    invited_id = Column(String, nullable=False)  # кого пригласили
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -68,22 +68,23 @@ class SQL:
             data = {
                 "РОССИЯ": {
                     "code": "RU",
-                    "currencies_from_crypto": ["USDT", "BTC", "ETH"],
-                    "currencies_from_fiat": ["RUB"],
-                    "cities": ["Москва", "Новосибирск", "Калининград"]
+                    "currencies_from_crypto": ["USDT", "BTC"],
+                    "currencies_from_fiat": ["RUB", "EUR", "USD"],
+                    "cities": ["Москва", "Новосибирск", "Калининград", "Санкт-Петербург",
+                               "Сочи", "Казань", "Краснодар"]
                 },
-                "США": {
-                    "code": "US",
-                    "currencies_from_crypto": ["USDT", "BTC", "ETH"],
-                    "currencies_from_fiat": ["USD"],
-                    "cities": ["New York", "Los Angeles", "Houston"]
-                },
-                "ПОЛЬША": {
-                    "code": "PL",
-                    "currencies_from_crypto": ["USDT", "ETH"],
-                    "currencies_from_fiat": ["USD", "EUR"],
-                    "cities": ["Варшава", "Белосток", "Плоцк", "Радом"]
-                }
+                # "США": {
+                #     "code": "US",
+                #     "currencies_from_crypto": ["USDT", "BTC", "ETH"],
+                #     "currencies_from_fiat": ["USD"],
+                #     "cities": ["New York", "Los Angeles", "Houston"]
+                # },
+                # "ПОЛЬША": {
+                #     "code": "PL",
+                #     "currencies_from_crypto": ["USDT", "ETH"],
+                #     "currencies_from_fiat": ["USD", "EUR"],
+                #     "cities": ["Варшава", "Белосток", "Плоцк", "Радом"]
+                # }
             }
 
             # Получаем все страны из БД

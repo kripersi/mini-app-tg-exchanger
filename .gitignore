@@ -24,6 +24,7 @@ env/
 # Системные и временные файлы
 .DS_Store
 Thumbs.db
+*.zip
 
 # Внешние библиотеки
 external_libraries/
@@ -31,3 +32,5 @@ external_libraries/
 # Конфигурации и секреты
 .env
 *.sqlite3
+create_db.py
+
