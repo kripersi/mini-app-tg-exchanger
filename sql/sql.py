@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
-from .sql_model import Base, Country, ExchangeRequest, ExchangeRate
+from .sql_model import Base, Country, ExchangeRequest, ExchangeRate, TelegramUser
 
 
 class SQL:
@@ -133,3 +133,9 @@ class SQL:
             deleted = session.query(ExchangeRequest).delete()
             session.commit()
             print(f"Удалено заявок: {deleted}")
+
+    # ------------------- Пользователи -------------------
+    def get_user_by_tg_id(self, tg_id: str):
+        """Получить пользователя по Telegram ID"""
+        with self.Session() as session:
+            return session.query(TelegramUser).filter_by(tg_id=str(tg_id)).first()

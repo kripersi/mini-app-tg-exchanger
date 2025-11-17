@@ -13,8 +13,11 @@
         👥 Реферальная программа
     </button>
 
-    <button class="menu-item purple">
-        ⚙️ Настройки
+    <button class="menu-item purple"
+            onclick="location.href=`/settings?user_id=${tg.initDataUnsafe.user.id}`">
+        ⚙ Настройки
     </button>
 </div>
+
+<script src="{{ url_for('static', filename='js/cabinet.js') }}"></script>
 {% endblock %}

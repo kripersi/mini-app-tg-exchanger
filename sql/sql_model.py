@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Float, Boolean
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime
 
@@ -63,11 +63,20 @@ class ExchangeRate(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
-# ---------- 4. Рефералы ----------
-class Referral(Base):
-    __tablename__ = "referrals"
+# ---------- 4. Пользователи ----------
+class TelegramUser(Base):
+    __tablename__ = "users_bot"
 
-    id = Column(Integer, primary_key=True)
-    user_id = Column(String, nullable=False)  # кто приглашает
-    invited_id = Column(String, nullable=False)  # кого пригласили
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tg_id = Column(String, unique=True, nullable=False)  # ID Telegram
+    username = Column(String, nullable=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    full_name = Column(String, nullable=True)
+    banned = Column(Boolean, default=False)  # True / False
+    first_start = Column(DateTime, default=datetime.utcnow)
+    email = Column(String, nullable=True)
+
+    referrals = Column(JSON, default=[])  # список tg_id приглашённых
+    referrer_id = Column(String, nullable=True)  # tg_id того, кто пригласил
+

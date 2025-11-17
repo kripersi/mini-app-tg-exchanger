@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, WebAppInfo
@@ -11,41 +12,35 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import CommandStart
 from aiogram.utils.deep_linking import create_start_link, decode_payload
 
-from sqlalchemy import select
-
 from config import TG_API_KEY, ADMINS, URL_SITE
 from sql.sql import SQL
-from sql.sql_model import Referral
+from sql.sql_model import TelegramUser
 
-# --- Инициализация ---
+# Инициализация
 bot = Bot(token=TG_API_KEY, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
-
 db = SQL()
 
 
 async def handle_referral(referrer_id: str, invited_id: str):
-    if referrer_id == invited_id:
+    if str(referrer_id) == str(invited_id):
         return  # нельзя пригласить самого себя
 
     with db.Session() as session:
-        # Уже зарегистрирован?
-        exists = session.execute(
-            select(Referral).where(Referral.invited_id == str(invited_id))
-        ).scalar_one_or_none()
+        ref_user = session.query(TelegramUser).filter_by(tg_id=str(referrer_id)).first()
+        invited_user = session.query(TelegramUser).filter_by(tg_id=str(invited_id)).first()
 
-        if exists:
+        if not ref_user or not invited_user:
             return
 
-        # Создаём запись
-        r = Referral(
-            user_id=str(referrer_id),
-            invited_id=str(invited_id)
-        )
-        session.add(r)
-        session.commit()
+        # Десериализуем список рефералов
+        referrals = json.loads(ref_user.referrals or '[]')
 
-    # Уведомление рефереру
+        if str(invited_id) not in referrals:
+            referrals.append(str(invited_id))
+            ref_user.referrals = json.dumps(referrals)
+            session.commit()
+
     try:
         await bot.send_message(
             chat_id=referrer_id,
@@ -57,36 +52,59 @@ async def handle_referral(referrer_id: str, invited_id: str):
 
 @dp.message(CommandStart())
 async def start_cmd(message: Message):
-    text = message.text
-
-    payload = text.replace("/start", "").strip()
-
+    payload = message.text.replace("/start", "").strip()
     referrer_id = None
 
-    # Если старт по реферальной ссылке
     if payload:
         try:
             referrer_id = decode_payload(payload)
-        except:
+        except Exception:
             referrer_id = None
 
     invited_id = str(message.from_user.id)
+    username = message.from_user.username
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name
 
-    # Обработка реферала
-    if referrer_id:
-        await handle_referral(referrer_id, invited_id)
+    try:
+        with db.Session() as session:
+            user = session.query(TelegramUser).filter_by(tg_id=invited_id).first()
 
-    # Кнопка Mini App
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text="Открыть мини-приложение",
-        web_app=WebAppInfo(url=URL_SITE)
-    )
+            if not user:
+                user = TelegramUser(
+                    tg_id=invited_id,
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    referrals=json.dumps([]),
+                    referrer_id=str(referrer_id) if referrer_id else None
+                )
+                session.add(user)
 
-    await message.answer(
-        "👋 Привет! Нажми кнопку ниже, чтобы открыть мини-приложение:",
-        reply_markup=builder.as_markup()
-    )
+            else:
+                if not user.referrer_id and referrer_id and str(referrer_id) != invited_id:
+                    user.referrer_id = str(referrer_id)
+
+            session.commit()
+
+        if referrer_id and str(referrer_id) != invited_id:
+            await handle_referral(referrer_id, invited_id)
+
+        builder = InlineKeyboardBuilder()
+        builder.button(
+            text="Открыть мини-приложение",
+            web_app=WebAppInfo(url=URL_SITE)
+        )
+
+        await message.answer(
+            "👋 Привет! Нажми кнопку ниже, чтобы открыть мини-приложение:",
+            reply_markup=builder.as_markup()
+        )
+
+    except Exception as e:
+        import traceback
+        print("Ошибка в /start:", e)
+        traceback.print_exc()
 
 
 async def notify_admins(data):

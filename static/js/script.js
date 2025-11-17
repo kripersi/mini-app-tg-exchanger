@@ -2,7 +2,7 @@ const tg = window.Telegram?.WebApp;
 if (tg) tg.expand();
 
 // === Проверка текущей страницы ===
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const navControl = document.getElementById("nav-control");
   const isIndexPage = window.location.pathname === "/" || window.location.pathname.endsWith("/index");
 
@@ -20,14 +20,54 @@ document.addEventListener("DOMContentLoaded", () => {
   const MAX_USDT = 100000;
   const COMMISSION_PERCENT = 3;
 
+  // --- Заполнение данных пользователя ---
   const user = tg?.initDataUnsafe?.user;
   if (user) {
     document.querySelector('input[name="user_id"]').value = user.id || "";
     document.querySelector('input[name="first_name"]').value = user.first_name || "";
     document.querySelector('input[name="last_name"]').value = user.last_name || "";
     document.querySelector('input[name="username"]').value = user.username || "";
+
+    // Получаем email и ФИО пользователя из базы
+    try {
+      const resp = await fetch(`/api/user/${user.id}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.email) document.querySelector('input[name="email"]').value = data.email;
+        if (data.full_name) document.querySelector('input[name="fullname"]').value = data.full_name;
+      }
+    } catch (err) {
+      console.warn("Не удалось получить профиль пользователя:", err);
+    }
   }
 
+  // --- Обновление email и ФИО через кнопку ---
+  const saveBtn = document.getElementById("saveProfileBtn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async () => {
+      const tg_id = document.querySelector('input[name="user_id"]').value;
+      const email = document.querySelector('input[name="email"]').value;
+      const fullname = document.querySelector('input[name="fullname"]').value;
+
+      try {
+        const res = await fetch("/api/user/update_profile", {
+          method: "POST",
+          body: new URLSearchParams({ tg_id, email, fullname })
+        });
+        const data = await res.json();
+        if (data.status === "ok") {
+          alert("Профиль обновлен");
+        } else {
+          alert("Ошибка обновления: " + JSON.stringify(data));
+        }
+      } catch (err) {
+        console.error("Ошибка при обновлении профиля:", err);
+        alert("Ошибка при обновлении профиля");
+      }
+    });
+  }
+
+  // --- Работа с формой заявки ---
   countrySelect?.addEventListener("change", async () => {
     const country = countrySelect.value;
     if (!country) return;
@@ -48,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
     citySelect.innerHTML = "";
 
     const allCurrencies = [...data.currencies_from_crypto, ...data.currencies_from_fiat];
-
     allCurrencies.forEach((cur) => {
       giveSelect.append(new Option(cur, cur));
       getSelect.append(new Option(cur, cur));
@@ -72,6 +111,15 @@ document.addEventListener("DOMContentLoaded", () => {
     notif.textContent = message;
     container.appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
+  }
+
+  // --- debounce-хелпер ---
+  function debounce(fn, delay = 500) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
   }
 
   let currentRate = null;
@@ -110,13 +158,17 @@ document.addEventListener("DOMContentLoaded", () => {
   giveSelect.addEventListener("change", updateRate);
   getSelect.addEventListener("change", updateRate);
 
-  document.getElementById("give-amount").addEventListener("input", async () => {
+  // --- Обработчик ввода суммы ---
+  const handleGiveAmountInput = async () => {
     if (!currentRate) return;
 
-    const raw = document.getElementById("give-amount").value.replace(",", ".");
-    const giveValue = parseFloat(raw);
+    const giveInputEl = document.getElementById("give-amount");
     const getInput = document.getElementById("get-amount");
     const warning = document.getElementById("amount-warning");
+
+    const raw = giveInputEl.value.replace(",", ".");
+    const giveValue = parseFloat(raw);
+
     warning.textContent = "";
 
     if (isNaN(giveValue)) {
@@ -124,6 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Проверка лимитов только после паузы (дебаунс)
     if (giveSelect.value !== "USDT" && giveSelect.value !== getSelect.value) {
       try {
         const res = await fetch(`/get_rate?give_currency=${giveSelect.value}&get_currency=USDT`);
@@ -149,7 +202,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const finalAmount = giveValue * currentRate * (1 - COMMISSION_PERCENT / 100);
     getInput.value = finalAmount.toFixed(4);
-  });
+  };
+
+  document
+    .getElementById("give-amount")
+    .addEventListener("input", debounce(handleGiveAmountInput, 600));
 
   document.getElementById("get-amount").addEventListener("input", () => {
     if (!currentRate) return;

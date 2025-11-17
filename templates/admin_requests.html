@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}Заявки{% endblock %}
+
+{% block content %}
+<h1>Список заявок</h1>
+
+<div class="requests-list">
+    {% for r in reqs %}
+    <a href="/admin/request/{{ r }}?user_id={{ request.args.get('user_id') }}" class="request-card">
+        <div class="request-card-content">
+            <span class="request-id">Заявка №{{ r }}</span>
+            <span class="arrow">›</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}
+

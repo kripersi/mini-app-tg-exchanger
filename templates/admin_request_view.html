@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block title %}Заявка №{{ req.id }}{% endblock %}
+
+{% block content %}
+<h1>Заявка №{{ req.id }}</h1>
+
+<p><strong>Телеграм ID:</strong> {{ req.user_id }}</p>
+
+<p>
+    <strong>Имя:</strong> {{ req.first_name }} {{ req.last_name }}
+</p>
+
+<p class="username">
+    <strong>Username:</strong>
+    {% if req.username %}
+    <a href="https://t.me/{{ req.username }}" target="_blank">
+        @{{ req.username }}
+    </a>
+    {% else %}
+    <span>-</span>
+    {% endif %}
+</p>
+
+<hr>
+
+<p><strong>Отдаёт:</strong> {{ req.give_amount }} {{ req.give_currency }}</p>
+<p><strong>Получает:</strong> {{ req.get_amount }} {{ req.get_currency }}</p>
+<p><strong>Страна:</strong> {{ req.country_data.name }}</p>
+<p><strong>Город:</strong> {{ req.city }}</p>
+
+<hr>
+
+<p><strong>Email:</strong> {{ req.email }}</p>
+<p><strong>ФИО:</strong> {{ req.fullname }}</p>
+<p><strong>Дата:</strong> {{ req.datetime.strftime('%Y-%m-%d %H:%M') }}</p>
+
+<hr>
+
+<h3>Статус заявки</h3>
+
+<form method="POST" action="/admin/request/{{ req.id }}/status?user_id={{ request.args.get('user_id') }}">
+    <select name="status">
+        <option value="открыта" {% if req.status==
+        'открыта' %}selected{% endif %}>Открыта</option>
+        <option value="выполнена" {% if req.status==
+        'выполнена' %}selected{% endif %}>Выполнена</option>
+        <option value="отменена" {% if req.status==
+        'отменена' %}selected{% endif %}>Отменена</option>
+    </select>
+
+    <button type="submit" class="menu-item purple" style="margin-top: 10px;">
+        💾 Сохранить
+    </button>
+</form>
+
+<hr>
+
+<button class="menu-item purple"
+        onclick="location.href='/admin/requests?user_id={{ request.args.get('user_id') }}'">
+    ⬅ Назад
+</button>
+
+{% endblock %}

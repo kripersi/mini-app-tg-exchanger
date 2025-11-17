@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}Админ-панель{% endblock %}
+
+{% block content %}
+<h1>Админ-панель</h1>
+
+<script>
+    const tg = window.Telegram?.WebApp;
+    const userId = tg?.initDataUnsafe?.user?.id;
+</script>
+
+<div class="menu">
+    <button class="menu-item purple admin-button"
+            onclick="location.href=`/admin/requests?user_id=${tg.initDataUnsafe.user.id}`">
+        💱 Заявки на обмен
+    </button>
+    <button class="menu-item purple admin-button"
+            onclick="location.href=`/admin/users?user_id=${tg.initDataUnsafe.user.id}`">
+        📖 Юзеры
+    </button>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_check.js') }}"></script>
+{% endblock %}

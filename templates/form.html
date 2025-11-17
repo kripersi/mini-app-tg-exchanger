@@ -10,9 +10,9 @@
     <div id="form-errors">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for cat, msg in messages %}
-            <div class="flash-item {{ cat }}">{{ msg }}</div>
-            {% endfor %}
+        {% for cat, msg in messages %}
+        <div class="flash-item {{ cat }}">{{ msg }}</div>
+        {% endfor %}
         {% endif %}
         {% endwith %}
     </div>
@@ -22,7 +22,8 @@
         <select name="country" id="country" required>
             <option value="" selected disabled>Выберите страну</option>
             {% for c in countries %}
-            <option value="{{ c.name }}" {% if form and form.country == c.name %} selected {% endif %}>{{ c.name }}</option>
+            <option value="{{ c.name }}" {% if form and form.country== c.name %} selected {% endif %}>{{ c.name }}
+            </option>
             {% endfor %}
         </select>
 
@@ -55,11 +56,12 @@
 
         <label>ФИО</label>
         <input type="text" name="fullname" id="fullname"
-               value="{{ form.fullname if form else '' }}" required>
+               value="{{ form.fullname if form else user.full_name if user else '' }}" required>
 
         <label>Почта</label>
         <input type="email" name="email" id="email"
-               value="{{ form.email if form else '' }}" required>
+               value="{{ form.email if form else user.email if user else '' }}" required>
+
 
         <label>Дата и время посещения офиса</label>
         <input type="datetime-local" name="datetime" id="datetime"

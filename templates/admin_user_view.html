@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}Пользователь{% endblock %}
+
+{% block content %}
+<h1>Пользователь</h1>
+
+<p><strong>ID Telegram:</strong> {{ u.tg_id }}</p>
+<p class="username"><strong>Username:</strong>
+    {% if u.username %}
+        <a href="https://t.me/{{ u.username }}" target="_blank">@{{ u.username }}</a>
+    {% else %}
+        -
+    {% endif %}
+</p>
+<p><strong>Имя:</strong> {{ u.first_name }} {{ u.last_name }}</p>
+<p><strong>Дата регистрации:</strong> {{ u.first_start.strftime('%Y-%m-%d %H:%M') }}</p>
+<p><strong>Статус:</strong> {% if u.banned %}Заблокирован{% else %}Активен{% endif %}</p>
+
+<form method="POST" action="/admin/user/{{ u.id }}/ban?user_id={{ request.args.get('user_id') }}">
+    {% if u.banned %}
+        <button type="submit" class="menu-item purple">Разблокировать</button>
+    {% else %}
+        <button type="submit" class="menu-item purple">Заблокировать</button>
+    {% endif %}
+</form>
+
+<hr>
+
+{% endblock %}

@@ -1,3 +1,4 @@
+// tg: Marpexiz
 const tg = window.Telegram.WebApp;
 tg.expand();
 
@@ -25,9 +26,10 @@ async function loadReferralData() {
         html += `
             <div class="referral-block">
                 <p><b>ID:</b> ${p.invited_id}</p>
-                <p><b>Дата:</b> ${p.created_at}</p>
+                <p><b>Username:</b> ${p.username ? '@' + p.username : '—'}</p>
             </div>`;
     });
+
 
     document.getElementById("ref-list").innerHTML = html || "<p>Пока нет приглашённых.</p>";
 }
