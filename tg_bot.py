@@ -10,18 +10,23 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.client.default import DefaultBotProperties
 
 from aiogram.filters import CommandStart
-from aiogram.utils.deep_linking import create_start_link, decode_payload
+from aiogram.utils.deep_linking import decode_payload
 
 from config import TG_API_KEY, ADMINS, URL_SITE
 from sql.sql import SQL
 from sql.sql_model import TelegramUser
 
-# Инициализация
+#  Инициализация 
 bot = Bot(token=TG_API_KEY, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher(storage=MemoryStorage())
 db = SQL()
 
+# Создаем глобальный event loop для Flask
+bot_loop = asyncio.new_event_loop()
+asyncio.set_event_loop(bot_loop)
 
+
+#  Работа с рефералами 
 async def handle_referral(referrer_id: str, invited_id: str):
     if str(referrer_id) == str(invited_id):
         return  # нельзя пригласить самого себя
@@ -29,13 +34,10 @@ async def handle_referral(referrer_id: str, invited_id: str):
     with db.Session() as session:
         ref_user = session.query(TelegramUser).filter_by(tg_id=str(referrer_id)).first()
         invited_user = session.query(TelegramUser).filter_by(tg_id=str(invited_id)).first()
-
         if not ref_user or not invited_user:
             return
 
-        # Десериализуем список рефералов
         referrals = json.loads(ref_user.referrals or '[]')
-
         if str(invited_id) not in referrals:
             referrals.append(str(invited_id))
             ref_user.referrals = json.dumps(referrals)
@@ -50,11 +52,11 @@ async def handle_referral(referrer_id: str, invited_id: str):
         pass
 
 
+#  Команда /start 
 @dp.message(CommandStart())
 async def start_cmd(message: Message):
     payload = message.text.replace("/start", "").strip()
     referrer_id = None
-
     if payload:
         try:
             referrer_id = decode_payload(payload)
@@ -69,7 +71,6 @@ async def start_cmd(message: Message):
     try:
         with db.Session() as session:
             user = session.query(TelegramUser).filter_by(tg_id=invited_id).first()
-
             if not user:
                 user = TelegramUser(
                     tg_id=invited_id,
@@ -80,11 +81,9 @@ async def start_cmd(message: Message):
                     referrer_id=str(referrer_id) if referrer_id else None
                 )
                 session.add(user)
-
             else:
                 if not user.referrer_id and referrer_id and str(referrer_id) != invited_id:
                     user.referrer_id = str(referrer_id)
-
             session.commit()
 
         if referrer_id and str(referrer_id) != invited_id:
@@ -103,10 +102,11 @@ async def start_cmd(message: Message):
 
     except Exception as e:
         import traceback
-        print("Ошибка в /start:", e)
+        logging.error(f"Ошибка в /start: {e}")
         traceback.print_exc()
 
 
+#  Уведомление админов 
 async def notify_admins(data):
     try:
         user = data.get("user", {})
@@ -127,6 +127,17 @@ async def notify_admins(data):
         logging.error(f"Не удалось отправить сообщение админу: {e}")
 
 
+#  Функция для Flask 
+def notify_admins_sync(data):
+    """Вызывается из Flask синхронно"""
+    future = asyncio.run_coroutine_threadsafe(notify_admins(data), bot_loop)
+    try:
+        future.result(timeout=5)
+    except Exception as e:
+        logging.error(f"Не удалось отправить сообщение админу (sync): {e}")
+
+
+#  Запуск бота 
 async def main():
     logging.basicConfig(level=logging.INFO)
     await dp.start_polling(bot)

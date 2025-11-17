@@ -17,7 +17,7 @@
         {% endwith %}
     </div>
 
-    <form method="post" id="exchangeForm" action="{{ url_for('create') }}">
+    <form method="post" id="exchangeForm" action="{{ url_for('main.create') }}">
         <label>Страна</label>
         <select name="country" id="country" required>
             <option value="" selected disabled>Выберите страну</option>
