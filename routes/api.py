@@ -6,9 +6,9 @@ from tg_bot import bot
 from extensions import db, bot_loop
 from sql.sql_model import TelegramUser, ExchangeRequest
 from sqlalchemy import select
+from sql.sql_model import Country, ExchangeRate
 
 from aiogram.utils.deep_linking import create_start_link
-from utils.rate_utils import find_best_rate
 from config import ADMINS
 
 api_bp = Blueprint("api", __name__)
@@ -16,31 +16,28 @@ api_bp = Blueprint("api", __name__)
 
 @api_bp.route('/api/country/<name>')
 def get_country(name):
-    country = db.get_country_by_name(name)
-    if not country:
-        return jsonify({"error": "Страна не найдена"}), 404
-    return jsonify({
-        "name": country.name,
-        "code": country.code,
-        "currencies_from_crypto": country.currencies_from_crypto,
-        "currencies_from_fiat": country.currencies_from_fiat,
-        "cities": country.cities
-    })
-
-
-@api_bp.route("/get_rate")
-def get_rate():
-    give = request.args.get("give_currency")
-    get = request.args.get("get_currency")
-    if not give or not get:
-        return jsonify({"error": "Укажите валюты"}), 400
-    if give == get:
-        return jsonify({"error": "Валюты не могут совпадать"}), 400
     with db.Session() as session:
-        rate_data = find_best_rate(session, give, get)
-        if not rate_data:
-            return jsonify({"error": "Курс не найден"}), 404
-        return jsonify(rate_data)
+        country = session.query(Country).filter_by(name=name).first()
+        if not country:
+            return jsonify({"error": "Страна не найдена"}), 404
+
+        # Список всех валютных пар для страны
+        rates = session.query(ExchangeRate).all()
+
+        # Собираем пары "from → to"
+        pairs = []
+        for r in rates:
+            pairs.append({
+                "from": r.from_currency,
+                "to": r.to_currency,
+                "price": r.price,
+                "market_source": r.market_source
+            })
+
+        return jsonify({
+            "cities": country.cities,
+            "pairs": pairs
+        })
 
 
 @api_bp.route("/api/history/<user_id>")

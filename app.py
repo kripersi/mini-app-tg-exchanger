@@ -1,12 +1,10 @@
 from flask import Flask
 from config import ADMINS
 from extensions import db, bot_loop
+import threading
 
 app = Flask(__name__)
 app.secret_key = "secret123"
-
-# запустить bot loop в фоне
-import threading
 
 
 def start_bot_loop(loop):
@@ -30,4 +28,4 @@ app.register_blueprint(settings_bp)
 
 if __name__ == '__main__':
     db.seed_countries()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
