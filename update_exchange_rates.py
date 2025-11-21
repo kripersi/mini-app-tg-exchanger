@@ -1,10 +1,11 @@
 import requests
 import ccxt
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from sql.sql import SQL
 from sql.sql_model import ExchangeRate
 from utils.google_sheet import GoogleSheet
 import time
+from config import CURRENCY_API_FOR_USD, SHEET_NAME, CREDENTIALS_SHEET
 
 
 class ExchangeRateUpdater:
@@ -12,8 +13,7 @@ class ExchangeRateUpdater:
         self.sheet = GoogleSheet(sheet_credentials, sheet_name)
         self.sql = SQL()
         self.binance = ccxt.binance()
-        self.currencyfreaks_api_key = "3b6770c8a71a4850b2faacbedcb8c0c7"
-        self.usd_rub_url = f"https://api.currencyfreaks.com/v2.0/rates/latest?apikey={self.currencyfreaks_api_key}"
+        self.usd_rub_url = f"https://api.currencyfreaks.com/v2.0/rates/latest?apikey={CURRENCY_API_FOR_USD}"
 
     def fetch_usd_rub(self):
         try:
@@ -34,42 +34,37 @@ class ExchangeRateUpdater:
             print(f"❌ Ошибка получения курса {market}: {e}")
             return None
 
-    def calculate_price(self, row):
-        """Рассчитываем price исходя из Market Source и Direction"""
-        market = row["Market Source"]
-        direction = row["Direction"]
-
-        # FIAT→CRYPTO или CRYPTO→FIAT с USD/RUB
-        if market == "USD/RUB":
+    def get_price(self, market_source, direction):
+        """Рассчитываем актуальную цену"""
+        if market_source.upper() == "USDT/RUB":
             usd_rub = self.fetch_usd_rub()
             if usd_rub is None:
                 return None
-            if direction == "FIAT→CRYPTO":
-                return 1 / usd_rub
-            else:  # CRYPTO→FIAT
-                return usd_rub
+            return 1 / usd_rub if direction == "FIAT→CRYPTO" else usd_rub
 
-        # Остальные пары через Binance
-        price = self.fetch_price(market)
-        return price
+        # Для остальных пар (например BTC/USDT, ETH/RUB)
+        return self.fetch_price(market_source)
 
     def update_db(self):
         rows = self.sheet.get_all_records()
 
         for row in rows:
-            price = self.calculate_price(row)
+            price = self.get_price(row["Market Source"], row["Direction"])
             if price is None:
+                print(f"❌ Не удалось получить цену для {row['From']} → {row['To']}")
                 continue
 
             obj = ExchangeRate(
                 from_currency=row["From"],
                 to_currency=row["To"],
-                direction=row["Direction"],
                 market_source=row["Market Source"],
+                direction=row["Direction"],
                 buy_percent=float(row.get("Buy %", 0)),
                 sell_percent=float(row.get("Sell %", 0)),
+                buy_rate_formul=row.get("Buy Rate formul", ""),
+                sell_rate_formul=row.get("Sell Rate formul", ""),
                 price=price,
-                updated_at=datetime.now(UTC)
+                updated_at=datetime.now(timezone.utc)
             )
             self.sql.add_exchange_rate(obj)
             print(f"✅ Обновлён курс {row['From']} → {row['To']}: {price}")
@@ -85,7 +80,7 @@ class ExchangeRateUpdater:
 
 if __name__ == "__main__":
     updater = ExchangeRateUpdater(
-        sheet_credentials=r"D:\BUCKET_PROJECT\credentials_for_copies.json",
-        sheet_name="test"
+        sheet_credentials=CREDENTIALS_SHEET,
+        sheet_name=SHEET_NAME
     )
     updater.start()

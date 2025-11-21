@@ -33,4 +33,5 @@ external_libraries/
 .env
 *.sqlite3
 create_db.py
+credentials_for_copies.json
 

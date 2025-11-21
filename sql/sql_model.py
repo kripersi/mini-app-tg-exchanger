@@ -58,13 +58,15 @@ class ExchangeRate(Base):
     __tablename__ = "exchange_rates"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    from_currency = Column(String, nullable=False)  # From
-    to_currency = Column(String, nullable=False)    # To
-    direction = Column(String, nullable=False)      # FIAT→CRYPTO / CRYPTO→FIAT / CRYPTO→CRYPTO
-    market_source = Column(String, nullable=False)  # USDT/RUB, BTC/USDT, EUR/USDT
+    from_currency = Column(String, nullable=False)     # From
+    to_currency = Column(String, nullable=False)       # To
+    direction = Column(String, nullable=False)         # FIAT→CRYPTO / CRYPTO→FIAT / CRYPTO→CRYPTO
+    market_source = Column(String, nullable=False)     # USDT/RUB, BTC/USDT, EUR/USDT
     buy_percent = Column(Float, default=0.0)
     sell_percent = Column(Float, default=0.0)
-    price = Column(Float, nullable=False)          # актуальный курс
+    buy_rate_formul = Column(String, nullable=True)    # Формула buy rate, например "цена × (1 - Buy % / 100)"
+    sell_rate_formul = Column(String, nullable=True)   # Формула sell rate
+    price = Column(Float, nullable=False)             # актуальный курс из API
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 

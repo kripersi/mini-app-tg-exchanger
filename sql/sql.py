@@ -68,8 +68,9 @@ class SQL:
             data = {
                 "РОССИЯ": {
                     "code": "RU",
-                    "currencies_from_crypto": ["USDT BEP20", "USDT ERC20", "USDT TRC20", "BTC", "ETH"],
-                    "currencies_from_fiat": ["Cash RUB", "EUR Cash", "USD Cash"],
+                    "currencies_from_crypto": ["Tether BEP20 (USDT)", "Tether ERC20 (USDT)", "Tether TRC20 (USDT)",
+                                               "BTC"],
+                    "currencies_from_fiat": ["Cash RUB", "Cash EUR", "Cash USD"],
                     "cities": ["Москва", "Новосибирск", "Калининград", "Санкт-Петербург",
                                "Сочи", "Казань", "Краснодар"]
                 },
