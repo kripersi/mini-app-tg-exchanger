@@ -1,15 +1,7 @@
 const tg = window.Telegram?.WebApp;
 if (tg) tg.expand();
 
-// === Проверка текущей страницы ===
 document.addEventListener("DOMContentLoaded", async () => {
-  const navControl = document.getElementById("nav-control");
-  const isIndexPage = window.location.pathname === "/" || window.location.pathname.endsWith("/index");
-
-  if (isIndexPage && navControl) {
-    navControl.innerHTML = `<div class="greeting-bar">Главное меню</div>`;
-  }
-
   const countrySelect = document.getElementById("country");
   const giveSelect = document.getElementById("give_currency");
   const getSelect = document.getElementById("get_currency");
@@ -20,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const MAX_USDT = 100000;
   const COMMISSION_PERCENT = 3;
 
-  // --- Заполнение данных пользователя ---
+  // Заполняем данные пользователя из Telegram
   const user = tg?.initDataUnsafe?.user;
   if (user) {
     document.querySelector('input[name="user_id"]').value = user.id || "";
@@ -28,7 +20,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelector('input[name="last_name"]').value = user.last_name || "";
     document.querySelector('input[name="username"]').value = user.username || "";
 
-    // Получаем email и ФИО пользователя из базы
     try {
       const resp = await fetch(`/api/user/${user.id}`);
       if (resp.ok) {
@@ -41,63 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // --- Обновление email и ФИО через кнопку ---
-  const saveBtn = document.getElementById("saveProfileBtn");
-  if (saveBtn) {
-    saveBtn.addEventListener("click", async () => {
-      const tg_id = document.querySelector('input[name="user_id"]').value;
-      const email = document.querySelector('input[name="email"]').value;
-      const fullname = document.querySelector('input[name="fullname"]').value;
-
-      try {
-        const res = await fetch("/api/user/update_profile", {
-          method: "POST",
-          body: new URLSearchParams({ tg_id, email, fullname })
-        });
-        const data = await res.json();
-        if (data.status === "ok") {
-          alert("Профиль обновлен");
-        } else {
-          alert("Ошибка обновления: " + JSON.stringify(data));
-        }
-      } catch (err) {
-        console.error("Ошибка при обновлении профиля:", err);
-        alert("Ошибка при обновлении профиля");
-      }
-    });
-  }
-
-  // --- Работа с формой заявки ---
-  countrySelect?.addEventListener("change", async () => {
-    const country = countrySelect.value;
-    if (!country) return;
-
-    try {
-      const response = await fetch(`/api/country/${country}`);
-      const data = await response.json();
-      updateSelects(data);
-    } catch (err) {
-      console.error(err);
-      showNotification("Не удалось загрузить данные страны.");
-    }
-  });
-
-  function updateSelects(data) {
-    giveSelect.innerHTML = "";
-    getSelect.innerHTML = "";
-    citySelect.innerHTML = "";
-
-    const allCurrencies = [...data.currencies_from_crypto, ...data.currencies_from_fiat];
-    allCurrencies.forEach((cur) => {
-      giveSelect.append(new Option(cur, cur));
-      getSelect.append(new Option(cur, cur));
-    });
-
-    data.cities.forEach((city) => {
-      citySelect.append(new Option(city, city));
-    });
-  }
-
+  // --- Функция отображения уведомлений ---
   function showNotification(message) {
     const container = document.getElementById("notification-container") || (() => {
       const el = document.createElement("div");
@@ -124,43 +59,86 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let currentRate = null;
 
+  // --- При изменении страны загружаем валюты и города ---
+  countrySelect?.addEventListener("change", async () => {
+    const country = countrySelect.value;
+    if (!country) return;
+
+    try {
+      const response = await fetch(`/api/country/${encodeURIComponent(country)}`);
+      const data = await response.json();
+
+      // Заполняем города
+      citySelect.innerHTML = "";
+      data.cities.forEach(city => citySelect.append(new Option(city, city)));
+
+      // Заполняем валюты для отдачи
+      giveSelect.innerHTML = "";
+      const allCurrencies = [...data.currencies_from_crypto, ...data.currencies_from_fiat];
+      allCurrencies.forEach(cur => giveSelect.append(new Option(cur, cur)));
+
+      getSelect.innerHTML = "<option value='' selected disabled>Выберите валюту</option>";
+    } catch (err) {
+      console.error(err);
+      showNotification("Не удалось загрузить данные страны.");
+    }
+  });
+
+  // --- При выборе валюты для отдачи загружаем допустимые валюты для получения ---
+  giveSelect?.addEventListener("change", async () => {
+    const give = giveSelect.value;
+    const country = countrySelect.value;
+    if (!give || !country) return;
+
+    try {
+        const resp = await fetch(`/get_possible_get_currencies?give_currency=${encodeURIComponent(give)}&country=${encodeURIComponent(country)}`);
+        const data = await resp.json();
+        getSelect.innerHTML = "";
+        data.currencies.forEach(cur => getSelect.append(new Option(cur, cur)));
+        updateRate();
+    } catch (err) {
+        console.error(err);
+        showNotification("Не удалось загрузить список валют для получения");
+    }
+    });
+
+
+  // --- Обновление курса ---
   async function updateRate() {
-  const give = giveSelect.value;
-  const get = getSelect.value;
+    const give = giveSelect.value;
+    const get = getSelect.value;
 
-  if (!give || !get || give === get) {
-    currentRate = null;
-    document.getElementById("exchange-section").style.display = "none";
-    if (give === get) showNotification("Нельзя обменивать одинаковые валюты!");
-    return;
-  }
-
-  try {
-    const res = await fetch(`/get_rate?give_currency=${give}&get_currency=${get}`);
-    const data = await res.json();
-
-    if (data.error || !data.rate) {
+    if (!give || !get || give === get) {
       currentRate = null;
       document.getElementById("exchange-section").style.display = "none";
-      showNotification("Курс не найден");
+      if (give === get) showNotification("Нельзя обменивать одинаковые валюты!");
       return;
     }
 
-    currentRate = data.rate;
-    const adjustedRate = data.rate * (1 - COMMISSION_PERCENT / 100);
-    document.getElementById("rate-info").innerText = `1 ${give} ≈ ${adjustedRate.toFixed(4)} ${get}`;
-    document.getElementById("exchange-section").style.display = "block";
+    try {
+      const res = await fetch(`/get_rate?give_currency=${encodeURIComponent(give)}&get_currency=${encodeURIComponent(get)}`);
+      const data = await res.json();
 
-  } catch (err) {
-    currentRate = null;
-    document.getElementById("exchange-section").style.display = "none";
-    showNotification("Ошибка загрузки курса");
+      if (data.error || !data.rate) {
+        currentRate = null;
+        document.getElementById("exchange-section").style.display = "none";
+        showNotification("Курс не найден");
+        return;
+      }
+
+      currentRate = data.rate;
+      const adjustedRate = currentRate * (1 - COMMISSION_PERCENT / 100);
+      document.getElementById("rate-info").innerText = `1 ${give} ≈ ${adjustedRate.toFixed(4)} ${get}`;
+      document.getElementById("exchange-section").style.display = "block";
+
+    } catch (err) {
+      currentRate = null;
+      document.getElementById("exchange-section").style.display = "none";
+      showNotification("Ошибка загрузки курса");
+    }
   }
-}
 
-
-  giveSelect.addEventListener("change", updateRate);
-  getSelect.addEventListener("change", updateRate);
+  getSelect?.addEventListener("change", updateRate);
 
   // --- Обработчик ввода суммы ---
   const handleGiveAmountInput = async () => {
@@ -174,44 +152,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     const giveValue = parseFloat(raw);
 
     warning.textContent = "";
-
     if (isNaN(giveValue)) {
       getInput.value = "";
       return;
     }
 
-    // Проверка лимитов только после паузы (дебаунс)
-    if (giveSelect.value !== "USDT" && giveSelect.value !== getSelect.value) {
-      try {
-        const res = await fetch(`/get_rate?give_currency=${giveSelect.value}&get_currency=USDT`);
-        const data = await res.json();
-
-        if (!data.rate) {
-          warning.textContent = "Не удалось получить курс к USDT";
-          return;
-        }
-
+    // Проверка лимитов через курс к USDT
+    try {
+      const res = await fetch(`/get_rate?give_currency=${encodeURIComponent(giveSelect.value)}&get_currency=${encodeURIComponent("Cash USD")}`);
+      const data = await res.json();
+      if (data.rate) {
         const usdtEquivalent = giveValue * data.rate * (1 - COMMISSION_PERCENT / 100);
-
         if (usdtEquivalent < MIN_USDT) {
-          warning.textContent = `Сумма слишком мала: минимум 5 USDT (у вас ${usdtEquivalent.toFixed(4)} USDT)`;
+          warning.textContent = `Сумма слишком мала: минимум ${MIN_USDT} USDT (у вас ${usdtEquivalent.toFixed(4)} USDT)`;
         } else if (usdtEquivalent > MAX_USDT) {
-          warning.textContent = `Сумма слишком большая: максимум 100000 USDT (у вас ${usdtEquivalent.toFixed(2)} USDT)`;
+          warning.textContent = `Сумма слишком большая: максимум ${MAX_USDT} USDT (у вас ${usdtEquivalent.toFixed(2)} USDT)`;
         }
-      } catch (err) {
-        console.error(err);
-        warning.textContent = "Ошибка при проверке лимитов.";
       }
+    } catch (err) {
+      console.error(err);
+      warning.textContent = "Ошибка при проверке лимитов.";
     }
 
     const finalAmount = giveValue * currentRate * (1 - COMMISSION_PERCENT / 100);
     getInput.value = finalAmount.toFixed(4);
   };
 
-  document
-    .getElementById("give-amount")
-    .addEventListener("input", debounce(handleGiveAmountInput, 600));
+  document.getElementById("give-amount").addEventListener("input", debounce(handleGiveAmountInput, 600));
 
+  // --- Обратный расчет суммы ---
   document.getElementById("get-amount").addEventListener("input", () => {
     if (!currentRate) return;
     const getValue = parseFloat(document.getElementById("get-amount").value.replace(",", "."));
@@ -226,6 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // --- Проверка даты ---
   document.getElementById("datetime").addEventListener("input", () => {
     const input = document.getElementById("datetime");
     const warning = document.getElementById("datetime-warning");
@@ -250,6 +220,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // --- Отправка формы ---
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 

@@ -27,5 +27,4 @@ app.register_blueprint(api_bp)
 app.register_blueprint(settings_bp)
 
 if __name__ == '__main__':
-    db.seed_countries()
     app.run(host="0.0.0.0", port=5000, debug=True)

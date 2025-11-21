@@ -1,13 +1,12 @@
 import json
 import asyncio
 from flask import Blueprint, jsonify, request
+from aiogram.utils.deep_linking import create_start_link
 
+from sqlalchemy import select
+from sql.sql_model import TelegramUser, ExchangeRequest, ExchangeRate
 from tg_bot import bot
 from extensions import db, bot_loop
-from sql.sql_model import TelegramUser, ExchangeRequest
-from sqlalchemy import select
-
-from aiogram.utils.deep_linking import create_start_link
 from utils.rate_utils import find_best_rate
 from config import ADMINS
 
@@ -28,6 +27,26 @@ def get_country(name):
     })
 
 
+@api_bp.route("/get_possible_get_currencies")
+def get_possible_get_currencies():
+    give = request.args.get("give_currency")
+    country_name = request.args.get("country")
+    if not give:
+        return jsonify({"currencies": []}), 400
+
+    with db.Session() as session:
+        rates = session.query(ExchangeRate).all()
+        possible = set()
+
+        for r in rates:
+            if r.from_currency == give:
+                possible.add(r.to_currency)
+            elif r.to_currency == give:
+                possible.add(r.from_currency)
+
+    return jsonify({"currencies": sorted(possible)})
+
+
 @api_bp.route("/get_rate")
 def get_rate():
     give = request.args.get("give_currency")
@@ -36,12 +55,11 @@ def get_rate():
         return jsonify({"error": "Укажите валюты"}), 400
     if give == get:
         return jsonify({"error": "Валюты не могут совпадать"}), 400
+
     with db.Session() as session:
         rate_data = find_best_rate(session, give, get)
-
         if not rate_data:
             return jsonify({"error": "Курс не найден"}), 404
-
         return jsonify(rate_data)
 
 

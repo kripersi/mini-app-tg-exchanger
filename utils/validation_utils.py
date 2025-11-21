@@ -41,7 +41,7 @@ def validate_country_and_currencies(db, form):
 
 
 def validate_amount_limits(db, form):
-    """Проверяет сумму через пересчёт в USDT."""
+    """Проверяет сумму через пересчёт в Cash USD."""
     errors = []
     try:
         amount = float(form.get('give_amount').replace(',', '.').strip())
@@ -49,22 +49,27 @@ def validate_amount_limits(db, form):
         return {"errors": ["Введите корректную сумму."]}
 
     give_currency = form.get("give_currency")
-    min_usdt = 5
-    max_usdt = 100000
+    min_usd = 5
+    max_usd = 100000
 
-    if give_currency == "USDT":
-        usdt_equivalent = amount
+    target_currency = "Cash USD"
+
+    if give_currency == target_currency:
+        usd_equivalent = amount
     else:
         with db.Session() as session:
-            rate_data = find_best_rate(session, give_currency, "USDT")
-            if not rate_data or not rate_data.get("rate"):
-                return {"errors": ["Не удалось получить курс к USDT."]}
-            usdt_equivalent = amount * rate_data["rate"]
+            rate_data = find_best_rate(session, give_currency, target_currency)
 
-    if usdt_equivalent < min_usdt:
-        errors.append(f"Сумма слишком мала: минимум 5 USDT (у вас {usdt_equivalent:.4f})")
-    elif usdt_equivalent > max_usdt:
-        errors.append(f"Сумма слишком большая: максимум 100000 USDT (у вас {usdt_equivalent:.2f})")
+            if not rate_data or not rate_data.get("rate"):
+                return {"errors": [f"Не удалось получить курс к {target_currency}."]}
+
+            usd_equivalent = amount * rate_data["rate"]
+
+    if usd_equivalent < min_usd:
+        errors.append(f"Сумма слишком мала: минимум {min_usd} USD (у вас {usd_equivalent:.4f} USD)")
+    elif usd_equivalent > max_usd:
+        errors.append(f"Сумма слишком большая: максимум {max_usd} USD (у вас {usd_equivalent:.2f} USD)")
 
     return {"errors": errors, "amount": amount}
+
 
