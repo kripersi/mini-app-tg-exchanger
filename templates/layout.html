@@ -11,8 +11,13 @@
 <div class="page">
     <div class="header-bar">
         <div id="nav-control">
+            {% if request.path != "/" %}
             <button class="back-btn" onclick="history.back()">← Назад</button>
+            {% else %}
+            <div class="header-title">Главная страница</div>
+            {% endif %}
         </div>
+
 
         <div class="greeting-bar">
             {% if request.path != "/cabinet" %}

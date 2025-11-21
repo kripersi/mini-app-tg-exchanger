@@ -43,10 +43,34 @@ def get_latest_rate(session, give_code, get_code):
 
 
 def find_best_rate(session, give_code, get_code):
+    # Пробуем прямой курс или обратный
     row, reversed_pair = get_latest_rate(session, give_code, get_code)
-    if not row:
-        return None
+    if row:
+        return _compute_rate_from_row(row, reversed_pair)
 
+    intermediary = "Tether TRC20 (USDT)"
+
+    # A → USDT
+    row1, rev1 = get_latest_rate(session, give_code, intermediary)
+    # USDT → B
+    row2, rev2 = get_latest_rate(session, intermediary, get_code)
+
+    if row1 and row2:
+        rate1 = _compute_rate_value(row1, rev1)
+        rate2 = _compute_rate_value(row2, rev2)
+
+        if rate1 and rate2:
+            return {
+                "rate": rate1 * rate2,
+                "direction": "via_usdt",
+                "reversed": False
+            }
+
+    return None
+
+
+# вспомогательная функция для обработки строки курса
+def _compute_rate_from_row(row, reversed_pair):
     direction = row["direction"]
     price = row["price"]
     buy_percent = row["buy_percent"]
@@ -55,24 +79,32 @@ def find_best_rate(session, give_code, get_code):
     sell_formula = row["sell_rate_formul"]
 
     if not reversed_pair:
+
+        # Прямой курс
         if direction == "FIAT→CRYPTO":
             rate = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
         elif direction == "CRYPTO→FIAT":
             rate = evaluate_formula(buy_formula, price, buy_percent, sell_percent)
         else:
             return None
+
     else:
+        # Реверс
         if direction == "FIAT→CRYPTO":
-            base_rate = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
-            rate = 1 / base_rate if base_rate else None
-        elif direction == "CRYPTO→FIAT":
-            base_rate = evaluate_formula(buy_formula, price, buy_percent, sell_percent)
-            rate = 1 / base_rate if base_rate else None
-        else:
-            return None
+            base = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
+        else:  # CRYPTO→FIAT
+            base = evaluate_formula(buy_formula, price, buy_percent, sell_percent)
+
+        rate = 1 / base if base else None
 
     return {
         "rate": rate,
         "direction": direction,
         "reversed": reversed_pair
     }
+
+
+# вычисляет курс без упаковки в dict
+def _compute_rate_value(row, reversed_pair):
+    result = _compute_rate_from_row(row, reversed_pair)
+    return result["rate"] if result else None
