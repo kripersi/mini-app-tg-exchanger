@@ -125,42 +125,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   let currentRate = null;
 
   async function updateRate() {
-    const give = giveSelect.value;
-    const get = getSelect.value;
+  const give = giveSelect.value;
+  const get = getSelect.value;
 
-    if (!give || !get || give === get) {
+  if (!give || !get || give === get) {
+    currentRate = null;
+    document.getElementById("exchange-section").style.display = "none";
+    if (give === get) showNotification("Нельзя обменивать одинаковые валюты!");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/get_rate?give_currency=${give}&get_currency=${get}`);
+    const data = await res.json();
+
+    if (data.error || !data.rate) {
       currentRate = null;
       document.getElementById("exchange-section").style.display = "none";
-      if (give === get) showNotification("Нельзя обменивать одинаковые валюты!");
+      showNotification("Курс не найден");
       return;
     }
 
-    try {
-      const res = await fetch(`/get_rate?give_currency=${give}&get_currency=${get}`);
-      const data = await res.json();
+    currentRate = data.rate;
+    const adjustedRate = data.rate * (1 - COMMISSION_PERCENT / 100);
+    document.getElementById("rate-info").innerText = `1 ${give} ≈ ${adjustedRate.toFixed(4)} ${get}`;
+    document.getElementById("exchange-section").style.display = "block";
 
-    if (data.rate) {
-      currentRate = data.rate;
-      const adjustedRate = data.rate * (1 - COMMISSION_PERCENT / 100);
-
-      document.getElementById("rate-info").innerText =
-        `1 ${give} ≈ ${adjustedRate.toFixed(4)} ${get}`;
-
-      document.getElementById("exchange-section").style.display = "block";
-
-    } else {
-      currentRate = null;
-
-      document.getElementById("rate-info").innerText = "Курс не найден.";
-      document.getElementById("exchange-section").style.display = "none";
-    }
-
-    } catch (err) {
-      console.error(err);
-      currentRate = null;
-      document.getElementById("rate-info").innerText = "Ошибка загрузки курса.";
-    }
+  } catch (err) {
+    currentRate = null;
+    document.getElementById("exchange-section").style.display = "none";
+    showNotification("Ошибка загрузки курса");
   }
+}
+
 
   giveSelect.addEventListener("change", updateRate);
   getSelect.addEventListener("change", updateRate);
