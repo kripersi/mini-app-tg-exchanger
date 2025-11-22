@@ -9,7 +9,6 @@ SHEET_NAME = "test"
 TAB_EXCHANGE = "Лист1"
 TAB_COUNTRY_NAME = "страны"
 
-CURRENCY_API_FOR_USD = "3b6770c8a71a4850b2faacbedcb8c0c7"
 TG_API_KEY = "8345259625:AAGp8gV30HcZS_E0FKZ-pIA31RHfooty4PQ"
 ADMINS = [5381172828]  # Список Telegram ID админов
 

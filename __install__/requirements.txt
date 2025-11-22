@@ -3,3 +3,6 @@ aiogram==3.22.0
 psycopg2==2.9.11
 SQLAlchemy==2.0.44
 ccxt==4.5.12
+gspread==6.2.1
+requests==2.32.5
+

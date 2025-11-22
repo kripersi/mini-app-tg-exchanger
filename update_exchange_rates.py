@@ -5,7 +5,7 @@ from sql.sql import SQL
 from sql.sql_model import ExchangeRate, Country
 from utils.google_sheet import GoogleSheet
 import time
-from config import CURRENCY_API_FOR_USD, SHEET_NAME, CREDENTIALS_SHEET, TAB_EXCHANGE, TAB_COUNTRY_NAME
+from config import SHEET_NAME, CREDENTIALS_SHEET, TAB_EXCHANGE, TAB_COUNTRY_NAME
 
 
 class ExchangeRateUpdater:
@@ -26,44 +26,54 @@ class ExchangeRateUpdater:
 
         self.sql = SQL()
         self.binance = ccxt.binance()
-        self.usd_rub_url = f"https://api.currencyfreaks.com/v2.0/rates/latest?apikey={CURRENCY_API_FOR_USD}"
 
     # ---------------- COUNTRY SYNC ----------------
     def update_countries(self):
-        rows = self.sheet_countries.get_all_records()
+        try:
+            rows = self.sheet_countries.get_all_records()
+        except Exception as e:
+            print(f"⚠️ Ошибка чтения Google Sheet (страны), пропуск: {e}")
+            return
+
         session = self.sql.Session()
 
         existing = {c.name: c for c in session.query(Country).all()}
         new_names = set()
 
         for row in rows:
-            name = row["Страна"].strip()
-            new_names.add(name)
+            try:
+                name = row["Страна"].strip()
+                new_names.add(name)
 
-            code = row["Код"].strip()
-            crypto = [x.strip() for x in row["Криптовалюты"].split(",")]
-            fiat = [x.strip() for x in row["Фиатные валюты"].split(",")]
-            cities = [x.strip() for x in row["Города"].split(",")]
+                code = row["Код"].strip()
+                crypto = [x.strip() for x in row["Криптовалюты"].split(",")]
+                fiat = [x.strip() for x in row["Фиатные валюты"].split(",")]
+                cities = [x.strip() for x in row["Города"].split(",")]
 
-            if name in existing:
-                c = existing[name]
-                c.code = code
-                c.currencies_from_crypto = crypto
-                c.currencies_from_fiat = fiat
-                c.cities = cities
-                print(f"🔄 Обновлена страна: {name}")
-            else:
-                session.add(
-                    Country(
-                        name=name,
-                        code=code,
-                        currencies_from_crypto=crypto,
-                        currencies_from_fiat=fiat,
-                        cities=cities
+                if name in existing:
+                    c = existing[name]
+                    c.code = code
+                    c.currencies_from_crypto = crypto
+                    c.currencies_from_fiat = fiat
+                    c.cities = cities
+                    print(f"🔄 Обновлена страна: {name}")
+                else:
+                    session.add(
+                        Country(
+                            name=name,
+                            code=code,
+                            currencies_from_crypto=crypto,
+                            currencies_from_fiat=fiat,
+                            cities=cities
+                        )
                     )
-                )
-                print(f"➕ Добавлена страна: {name}")
+                    print(f"➕ Добавлена страна: {name}")
 
+            except Exception as e:
+                print(f"⚠️ Ошибка обработки строки для страны {row}: {e}")
+                continue
+
+        # Удаление старых стран
         for name in existing:
             if name not in new_names:
                 session.delete(existing[name])
@@ -74,14 +84,25 @@ class ExchangeRateUpdater:
         print("✅ Страны синхронизированы")
 
     # ---------------- EXCHANGE RATES ----------------
-    def fetch_usd_rub(self):
+    @staticmethod
+    def fetch_usd_rub():
+        """Получает курс USDT → RUB через CoinGecko."""
         try:
-            response = requests.get(self.usd_rub_url)
+            url = "https://api.coingecko.com/api/v3/simple/price"
+            params = {
+                'ids': 'tether',
+                'vs_currencies': 'rub'
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
             data = response.json()
-            rate = data["rates"].get("RUB")
-            return float(rate) if rate else None
+            rate = data.get('tether', {}).get('rub')
+            if rate is None:
+                print("❌ Не удалось получить курс USDT/RUB с CoinGecko")
+                return None
+            return float(rate)
         except Exception as e:
-            print(f"❌ Ошибка получения USD/RUB: {e}")
+            print(f"❌ Ошибка получения USD/RUB с CoinGecko: {e}")
             return None
 
     def fetch_price(self, market):
@@ -102,28 +123,37 @@ class ExchangeRateUpdater:
         return self.fetch_price(market_source)
 
     def update_db(self):
-        rows = self.sheet_rates.get_all_records()
+        try:
+            rows = self.sheet_rates.get_all_records()
+        except Exception as e:
+            print(f"⚠️ Ошибка чтения Google Sheet (курсы), пропуск: {e}")
+            return
 
         for row in rows:
-            price = self.get_price(row["Market Source"], row["Direction"])
-            if price is None:
-                print(f"❌ Не удалось получить цену для {row['From']} → {row['To']}")
-                continue
+            try:
+                price = self.get_price(row["Market Source"], row["Direction"])
+                if price is None:
+                    print(f"❌ Не удалось получить цену для {row['From']} → {row['To']}")
+                    continue
 
-            obj = ExchangeRate(
-                from_currency=row["From"],
-                to_currency=row["To"],
-                market_source=row["Market Source"],
-                direction=row["Direction"],
-                buy_percent=float(row.get("Buy %", 0)),
-                sell_percent=float(row.get("Sell %", 0)),
-                buy_rate_formul=row.get("Buy Rate formul", ""),
-                sell_rate_formul=row.get("Sell Rate formul", ""),
-                price=price,
-                updated_at=datetime.now(timezone.utc)
-            )
-            self.sql.add_exchange_rate(obj)
-            print(f"✅ Обновлён курс {row['From']} → {row['To']}: {price}")
+                obj = ExchangeRate(
+                    from_currency=row["From"],
+                    to_currency=row["To"],
+                    market_source=row["Market Source"],
+                    direction=row["Direction"],
+                    buy_percent=float(row.get("Buy %", 0)),
+                    sell_percent=float(row.get("Sell %", 0)),
+                    buy_rate_formul=row.get("Buy Rate formul", ""),
+                    sell_rate_formul=row.get("Sell Rate formul", ""),
+                    price=price,
+                    updated_at=datetime.now(timezone.utc)
+                )
+                self.sql.add_exchange_rate(obj)
+                print(f"✅ Обновлён курс {row['From']} → {row['To']}: {price}")
+
+            except Exception as e:
+                print(f"⚠️ Ошибка обработки строки курса {row}: {e}")
+                continue
 
     # ---------------- MAIN LOOP ----------------
     def start(self, interval_minutes=30):
