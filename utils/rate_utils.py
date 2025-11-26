@@ -80,20 +80,31 @@ def _compute_rate_from_row(row, reversed_pair):
 
     if not reversed_pair:
 
-        # Прямой курс
+        # Прямая пара
         if direction == "FIAT→CRYPTO":
             rate = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
+
         elif direction == "CRYPTO→FIAT":
             rate = evaluate_formula(buy_formula, price, buy_percent, sell_percent)
+
+        elif direction == "CRYPTO→CRYPTO":
+            rate = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
+
         else:
             return None
 
     else:
-        # Реверс
+
+        # Реверс пары
         if direction == "FIAT→CRYPTO":
             base = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
-        else:  # CRYPTO→FIAT
+        elif direction == "CRYPTO→FIAT":
             base = evaluate_formula(buy_formula, price, buy_percent, sell_percent)
+
+        elif direction == "CRYPTO→CRYPTO":
+            base = evaluate_formula(sell_formula, price, buy_percent, sell_percent)
+        else:
+            return None
 
         rate = 1 / base if base else None
 

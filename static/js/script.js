@@ -10,9 +10,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const MIN_USDT = 5;
   const MAX_USDT = 100000;
-  const COMMISSION_PERCENT = 3;
 
-  // Заполняем данные пользователя из Telegram
+  let currentRate = null;
+
+  // --- Данные пользователя Telegram ---
   const user = tg?.initDataUnsafe?.user;
   if (user) {
     document.querySelector('input[name="user_id"]').value = user.id || "";
@@ -32,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // --- Функция отображения уведомлений ---
+  // --- Уведомления ---
   function showNotification(message) {
     const container = document.getElementById("notification-container") || (() => {
       const el = document.createElement("div");
@@ -48,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => notif.remove(), 3000);
   }
 
-  // --- debounce-хелпер ---
+  // --- debounce ---
   function debounce(fn, delay = 500) {
     let timer;
     return (...args) => {
@@ -57,9 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
-  let currentRate = null;
-
-  // --- При изменении страны загружаем валюты и города ---
+  // --- Загрузка городов и валют ---
   countrySelect?.addEventListener("change", async () => {
     const country = countrySelect.value;
     if (!country) return;
@@ -68,11 +67,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const response = await fetch(`/api/country/${encodeURIComponent(country)}`);
       const data = await response.json();
 
-      // Заполняем города
       citySelect.innerHTML = "";
       data.cities.forEach(city => citySelect.append(new Option(city, city)));
 
-      // Заполняем валюты для отдачи
       giveSelect.innerHTML = "";
       const allCurrencies = [...data.currencies_from_crypto, ...data.currencies_from_fiat];
       allCurrencies.forEach(cur => giveSelect.append(new Option(cur, cur)));
@@ -84,24 +81,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // --- При выборе валюты для отдачи загружаем допустимые валюты для получения ---
+  // --- Возможные валюты для получения ---
   giveSelect?.addEventListener("change", async () => {
     const give = giveSelect.value;
     const country = countrySelect.value;
     if (!give || !country) return;
 
     try {
-        const resp = await fetch(`/get_possible_get_currencies?give_currency=${encodeURIComponent(give)}&country=${encodeURIComponent(country)}`);
-        const data = await resp.json();
-        getSelect.innerHTML = "";
-        data.currencies.forEach(cur => getSelect.append(new Option(cur, cur)));
-        updateRate();
-    } catch (err) {
-        console.error(err);
-        showNotification("Не удалось загрузить список валют для получения");
-    }
-    });
+      const resp = await fetch(`/get_possible_get_currencies?give_currency=${encodeURIComponent(give)}&country=${encodeURIComponent(country)}`);
+      const data = await resp.json();
 
+      getSelect.innerHTML = "";
+      data.currencies.forEach(cur => getSelect.append(new Option(cur, cur)));
+
+      updateRate();
+    } catch (err) {
+      console.error(err);
+      showNotification("Не удалось загрузить список валют для получения");
+    }
+  });
 
   // --- Обновление курса ---
   async function updateRate() {
@@ -126,9 +124,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
+      // >>> ВАЖНО: без комиссии, показываем как есть <<<
       currentRate = data.rate;
-      const adjustedRate = currentRate * (1 - COMMISSION_PERCENT / 100);
-      document.getElementById("rate-info").innerText = `1 ${give} ≈ ${adjustedRate.toFixed(4)} ${get}`;
+
+      document.getElementById("rate-info").innerText = `1 ${give} ≈ ${currentRate.toFixed(4)} ${get}`;
       document.getElementById("exchange-section").style.display = "block";
 
     } catch (err) {
@@ -140,7 +139,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   getSelect?.addEventListener("change", updateRate);
 
-  // --- Обработчик ввода суммы ---
+  // --- Расчёт суммы ---
   const handleGiveAmountInput = async () => {
     if (!currentRate) return;
 
@@ -157,12 +156,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Проверка лимитов через курс к USDT
+    // лимиты считаем по "голому" курсу к USD
     try {
       const res = await fetch(`/get_rate?give_currency=${encodeURIComponent(giveSelect.value)}&get_currency=${encodeURIComponent("Cash USD")}`);
       const data = await res.json();
       if (data.rate) {
-        const usdtEquivalent = giveValue * data.rate * (1 - COMMISSION_PERCENT / 100);
+        const usdtEquivalent = giveValue * data.rate;
         if (usdtEquivalent < MIN_USDT) {
           warning.textContent = `Сумма слишком мала: минимум ${MIN_USDT} USDT (у вас ${usdtEquivalent.toFixed(4)} USDT)`;
         } else if (usdtEquivalent > MAX_USDT) {
@@ -170,25 +169,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
     } catch (err) {
-      console.error(err);
       warning.textContent = "Ошибка при проверке лимитов.";
     }
 
-    const finalAmount = giveValue * currentRate * (1 - COMMISSION_PERCENT / 100);
+    const finalAmount = giveValue * currentRate;
     getInput.value = finalAmount.toFixed(4);
   };
 
   document.getElementById("give-amount").addEventListener("input", debounce(handleGiveAmountInput, 600));
 
-  // --- Обратный расчет суммы ---
+  // --- обратный расчёт ---
   document.getElementById("get-amount").addEventListener("input", () => {
     if (!currentRate) return;
+
     const getValue = parseFloat(document.getElementById("get-amount").value.replace(",", "."));
     const giveInput = document.getElementById("give-amount");
 
     if (!isNaN(getValue)) {
-      const rawAmount = getValue / (1 - COMMISSION_PERCENT / 100);
-      const giveValue = rawAmount / currentRate;
+      const giveValue = getValue / currentRate;
       giveInput.value = giveValue.toFixed(4);
     } else {
       giveInput.value = "";
@@ -251,7 +249,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } catch (err) {
       errorsContainer.innerHTML = "<div class='flash-item error'>Ошибка отправки формы.</div>";
-      console.error(err);
     }
   });
 });
