@@ -9,7 +9,7 @@ SHEET_NAME = "test"
 TAB_EXCHANGE = "Лист1"
 TAB_COUNTRY_NAME = "страны"
 
-TG_API_KEY = "8345259625:AAGp8gV30HcZS_E0FKZ-pIA31RHfooty4PQ"
-ADMINS = [5381172828]  # Список Telegram ID админов
+TG_API_KEY = os.getenv("TG_API_KEY")
+ADMINS = [...]  # Список Telegram ID админов
 
-URL_SITE = "https://oogenetic-factiously-joycelyn.ngrok-free.dev/"
+URL_SITE = "https://...../"

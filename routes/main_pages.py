@@ -50,6 +50,16 @@ def referral_page():
     return render_template("referral.html")
 
 
+@main_bp.route("/ref_program")
+def ref_program_page():
+    return render_template("ref_program.html")
+
+
+@main_bp.route("/services")
+def services_page():
+    return render_template("services.html")
+
+
 # ---------- ФОРМА ЗАЯВКИ ----------
 @main_bp.route('/create', methods=['GET', 'POST'])
 def create():
@@ -130,6 +140,8 @@ def create():
             "fullname": form.get("fullname"),
             "email": form.get("email"),
             "datetime": form.get("datetime"),
+            "give_amount": form.get("give_amount"),
+            "get_amount": form.get("get_amount"),
             "user": {
                 "id": form.get("user_id"),
                 "first_name": form.get("first_name"),

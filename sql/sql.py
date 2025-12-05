@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -6,14 +7,17 @@ from .sql_model import Base, Country, ExchangeRequest, ExchangeRate, TelegramUse
 
 class SQL:
     def __init__(self) -> None:
-        # Подключение к PostgreSQL
-        URL_DATABASE_LOCAL = "postgresql://postgres:1253@localhost:5432/exchange_bot_DB"
+        # Подключение к PostgreSQL через переменную окружения или локально
+        URL_DATABASE = os.getenv(
+            "DATABASE_URL",
+            "postgresql://postgres:1253@localhost:5432/exchange_bot_DB"
+        )
 
-        print("Подключение к локальной базе:")
-        print(repr(URL_DATABASE_LOCAL))
+        print("Подключение к базе:")
+        print(repr(URL_DATABASE))
 
         self.engine = create_engine(
-            URL_DATABASE_LOCAL,
+            URL_DATABASE,
             connect_args={"client_encoding": "utf8"}
         )
 
@@ -35,6 +39,7 @@ class SQL:
             session.commit()
 
     def add_exchange_rate(self, obj: ExchangeRate):
+        """Добавление курса."""
         with self.Session() as session:
             session.add(obj)
             session.commit()
@@ -50,8 +55,7 @@ class SQL:
         """Найти страну по названию."""
         with self.Session() as session:
             stmt = select(Country).where(Country.name == name)
-            result = session.execute(stmt).scalar_one_or_none()
-            return result
+            return session.execute(stmt).scalar_one_or_none()
 
     def get_all_requests(self, limit: int = 50):
         """Получить последние заявки."""
@@ -60,15 +64,17 @@ class SQL:
             return session.execute(stmt).scalars().all()
 
     # ---------- СЛУЖЕБНЫЕ МЕТОДЫ ----------
+
     def clear_requests(self):
-        """Очистить все заявки"""
+        """Очистить все заявки."""
         with self.Session() as session:
             deleted = session.query(ExchangeRequest).delete()
             session.commit()
             print(f"Удалено заявок: {deleted}")
 
-    # ------------------- Пользователи -------------------
+    # ---------- ПОЛЬЗОВАТЕЛИ ----------
+
     def get_user_by_tg_id(self, tg_id: str):
-        """Получить пользователя по Telegram ID"""
+        """Получить пользователя по Telegram ID."""
         with self.Session() as session:
             return session.query(TelegramUser).filter_by(tg_id=str(tg_id)).first()

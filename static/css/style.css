@@ -1,15 +1,12 @@
 :root {
-  --bg: #0d0d0d;
+  --bg: #17181e;
   --card: #1c1c1f;
-  --accent: #8b5cf6;
-  --accent2: #b096eb;
-  --muted: #bdb8c9;
+  --accent: #f7a600;
+  --accent2: #ffc35c;
+  --muted: #f7c600;
   --white: #ffffff;
-  --gray: #161616;
-  --red: #e45865;
-  --blue: #3b82f6;
-  --blue2: #6ba4ff;
-  --purple: #b88aff;
+  --gray: #71757a;
+  --yellow: #ffb11a;
 }
 
 * {
@@ -39,7 +36,6 @@ main.card {
   overflow-wrap: break-word;
   word-break: break-word;
   overflow: hidden;
-  width: 400px;
 }
 
 main.center {
@@ -110,7 +106,7 @@ input[type="number"] {
 }
 
 .btn:hover {
-  background: #7c3aed;
+  background: var(--accent2);
 }
 
 /* ===== Уведомления ===== */
@@ -162,7 +158,7 @@ input[type="number"] {
 }
 
 #form-errors {
-  color: var(--red);
+  color: var(--accent2);
   margin-bottom: 10px;
 }
 
@@ -171,22 +167,22 @@ input[type="number"] {
 }
 
 #amount-warning {
-  color: var(--red);
+  color: var(--accent2);
   font-size: 0.9em;
   margin-top: 4px;
 }
 
 #rate-info {
-  color: var(--muted);
-  margin-top: 8px;
-  word-break: break-word;
-  white-space: normal;
-  overflow-wrap: break-word;
+  display: block;
   max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
+
 #datetime-warning {
-  color: var(--red);
+  color: var(--accent2);
   font-size: 0.9em;
   margin-top: 4px;
 }
@@ -227,8 +223,9 @@ input[type="number"] {
   opacity: 0.9;
 }
 
-.menu-item.purple {
-  background: linear-gradient(90deg, #603aa1, #643391);
+.menu-item.yellow {
+  background: var(--accent);
+  color: black;
 }
 
 /* ===== Нижняя навигация ===== */
@@ -307,7 +304,7 @@ input[type="number"] {
 
 /* ===== Список городов ===== */
 .city-list .country-block {
-  background: var(--gray);
+  background: var(--yellow);
   border-radius: 12px;
   padding: 10px;
   margin-bottom: 10px;
@@ -315,7 +312,7 @@ input[type="number"] {
 }
 
 .country-block h2 {
-  color: var(--accent);
+  color: black;
   margin-bottom: 5px;
 }
 
@@ -326,15 +323,15 @@ input[type="number"] {
 }
 
 .country-block li {
-  color: var(--muted);
+  color: black;
   padding: 4px 0;
 }
 
 /* ===== Кнопка поддержки ===== */
 .support-btn {
   display: inline-block;
-  background: linear-gradient(90deg, #5b8aff, #6bafff);
-  color: #fff;
+  background: var(--yellow);
+  color: black;
   padding: 12px 20px;
   border-radius: 10px;
   text-decoration: none;
@@ -465,8 +462,8 @@ input[type="number"] {
   }
 
   main.card {
-    width: 100%;
-    max-width: 100%;
+    width: 300px;
+    max-width: 300px;
     padding: 20px;
     border-radius: 12px;
     box-shadow: none;

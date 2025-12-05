@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const menu = document.querySelector(".menu");
 
             const btn = document.createElement("button");
-            btn.className = "menu-item purple";
+            btn.className = "menu-item yellow";
             btn.textContent = "🛠 Админ-панель";
             btn.onclick = () => location.href = `/admin?user_id=${user.id}`;
 

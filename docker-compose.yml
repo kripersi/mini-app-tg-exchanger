@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1253
+      POSTGRES_DB: exchange_bot_DB
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  bot:
+    build: .
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:1253@db:5432/exchange_bot_DB
+      TG_API_KEY: ...
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/exchanger_tg_bot
+
+volumes:
+  db_data:

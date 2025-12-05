@@ -18,9 +18,9 @@
 
 <form method="POST" action="/admin/user/{{ u.id }}/ban?user_id={{ request.args.get('user_id') }}">
     {% if u.banned %}
-        <button type="submit" class="menu-item purple">Разблокировать</button>
+        <button type="submit" class="menu-item yellow">Разблокировать</button>
     {% else %}
-        <button type="submit" class="menu-item purple">Заблокировать</button>
+        <button type="submit" class="menu-item yellow">Заблокировать</button>
     {% endif %}
 </form>
 

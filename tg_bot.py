@@ -109,18 +109,30 @@ async def start_cmd(message: Message):
 #  Уведомление админов 
 async def notify_admins(data):
     try:
+        try:
+            give_amount = float(str(data.get("give_amount")).replace(",", "."))
+            get_amount = float(str(data.get("get_amount")).replace(",", "."))
+            rate = get_amount / give_amount if give_amount else 0
+            rate = round(rate, 4)
+        except Exception:
+            rate = "—"
+
         user = data.get("user", {})
         text = (
             f"<b>📥 Новая заявка</b>\n\n"
             f"🌍 <b>Страна:</b> {data.get('country')}\n"
             f"🏙️ <b>Город:</b> {data.get('city')}\n"
             f"💱 <b>Обмен:</b> {data.get('give_currency')} → {data.get('get_currency')}\n"
+            f"💰 <b>Отдаёт:</b> {data.get('give_amount')} {data.get('give_currency')}\n"
+            f"💵 <b>Получает:</b> {data.get('get_amount')} {data.get('get_currency')}\n"
+            f"📊 <b>Курс за {data.get('give_currency')}:</b> {rate} {data.get('get_currency')}\n\n"
             f"📅 <b>Дата и время:</b> {data.get('datetime')}\n\n"
             f"👤 <b>ФИО:</b> {data.get('fullname')}\n"
             f"📧 <b>Email:</b> {data.get('email')}\n"
             f"🧑‍💻 <b>Telegram:</b> @{user.get('username') or user.get('first_name') or '—'} "
             f"(ID: {user.get('id')})"
         )
+
         for admin_id in ADMINS:
             await bot.send_message(chat_id=admin_id, text=text)
     except Exception as e:
