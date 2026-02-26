@@ -20,7 +20,7 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql://postgres:1253@db:5432/exchange_bot_DB
-      TG_API_KEY: ...
+      TG_API_KEY: "8554046969:AAEHz09J2CHDd7nMa3Bvqfsoi1fxqTRYdg4"
     ports:
       - "5000:5000"
     volumes:

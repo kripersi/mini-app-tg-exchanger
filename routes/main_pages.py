@@ -2,9 +2,8 @@ from flask import Blueprint, render_template, request, flash, session as flask_s
 from sql.sql_model import ExchangeRequest, TelegramUser
 from utils.validation_utils import validate_form_data, validate_country_and_currencies, validate_amount_limits
 from tg_bot import notify_admins
-from extensions import db, bot_loop
+from extensions import db
 from datetime import datetime
-import asyncio
 
 main_bp = Blueprint("main", __name__)
 
@@ -150,7 +149,7 @@ def create():
             }
         }
 
-        asyncio.run(notify_admins(data))
+        notify_admins(data)
 
         # 8. Показываем страницу успеха
         flask_session["success_data"] = data

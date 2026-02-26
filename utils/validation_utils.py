@@ -50,7 +50,7 @@ def validate_amount_limits(db, form):
 
     give_currency = form.get("give_currency")
     min_usd = 5
-    max_usd = 100000
+    max_usd = 10000000
 
     target_currency = "Cash USD"
 

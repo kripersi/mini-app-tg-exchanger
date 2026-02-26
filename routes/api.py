@@ -30,20 +30,17 @@ def get_country(name):
 @api_bp.route("/get_possible_get_currencies")
 def get_possible_get_currencies():
     give = request.args.get("give_currency")
-    country_name = request.args.get("country")
     if not give:
         return jsonify({"currencies": []}), 400
 
     with db.Session() as session:
         rates = session.query(ExchangeRate).all()
         possible = set()
-
         for r in rates:
             if r.from_currency == give:
                 possible.add(r.to_currency)
             elif r.to_currency == give:
                 possible.add(r.from_currency)
-
     return jsonify({"currencies": sorted(possible)})
 
 
@@ -66,11 +63,7 @@ def get_rate():
 @api_bp.route("/api/history/<user_id>")
 def history(user_id):
     with db.Session() as session:
-        stmt = (
-            select(ExchangeRequest)
-            .where(ExchangeRequest.user_id == user_id)
-            .order_by(ExchangeRequest.id.desc())
-        )
+        stmt = select(ExchangeRequest).where(ExchangeRequest.user_id == user_id).order_by(ExchangeRequest.id.desc())
         data = session.execute(stmt).scalars().all()
         out = []
         for r in data:
@@ -89,10 +82,8 @@ def history(user_id):
 
 @api_bp.route("/api/referral_link/<int:user_id>")
 def referral_link(user_id):
-    coro = create_start_link(bot, payload=str(user_id), encode=True)
-    future = asyncio.run_coroutine_threadsafe(coro, bot_loop)
     try:
-        link = future.result(timeout=5)
+        link = f"https://t.me/MonettiXBot?start={user_id}"
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return jsonify({"link": link})
@@ -115,10 +106,7 @@ def referral_info(user_id):
                 "last_name": ref_user.last_name if ref_user else None,
                 "first_start": ref_user.first_start.strftime("%Y-%m-%d %H:%M") if ref_user else None
             })
-        return jsonify({
-            "count": len(referrals),
-            "list": list_out
-        })
+        return jsonify({"count": len(referrals), "list": list_out})
 
 
 @api_bp.route("/api/user/<tg_id>")

@@ -5,11 +5,11 @@ STATIC_FOLDER = os.path.join(BASE_DIR, 'static')
 TEMPLATE_FOLDER = os.path.join(BASE_DIR, 'templates')
 CREDENTIALS_SHEET = os.path.join(BASE_DIR, "credentials_for_copies.json")
 
-SHEET_NAME = "test"
+SHEET_NAME = "exchange_rates"
 TAB_EXCHANGE = "Лист1"
 TAB_COUNTRY_NAME = "страны"
 
 TG_API_KEY = os.getenv("TG_API_KEY")
 ADMINS = [...]  # Список Telegram ID админов
 
-URL_SITE = "https://...../"
+URL_SITE = "https://Site.ru/"

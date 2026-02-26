@@ -1,0 +1,13 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+.git
+.env
+.zip
+.gitignore
+asdf.py
+create_db.py
+README.md
+screenshots/

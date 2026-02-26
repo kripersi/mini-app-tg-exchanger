@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const form = document.getElementById("exchangeForm");
 
   const MIN_USDT = 5;
-  const MAX_USDT = 100000;
+  const MAX_USDT = 10000000;
 
   let currentRate = null;
 
@@ -60,25 +60,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- Загрузка городов и валют ---
   countrySelect?.addEventListener("change", async () => {
-    const country = countrySelect.value;
-    if (!country) return;
+  const country = countrySelect.value;
+  if (!country) return;
 
-    try {
-      const response = await fetch(`/api/country/${encodeURIComponent(country)}`);
-      const data = await response.json();
+  try {
+    const response = await fetch(`/api/country/${encodeURIComponent(country)}`);
+    const data = await response.json();
 
-      citySelect.innerHTML = "";
-      data.cities.forEach(city => citySelect.append(new Option(city, city)));
+    // --- Города ---
+    citySelect.innerHTML = "";
+    const cityPlaceholder = new Option("Выберите город", "");
+    cityPlaceholder.disabled = true;
+    cityPlaceholder.selected = true;
+    citySelect.append(cityPlaceholder);
 
-      giveSelect.innerHTML = "";
-      const allCurrencies = [...data.currencies_from_crypto, ...data.currencies_from_fiat];
-      allCurrencies.forEach(cur => giveSelect.append(new Option(cur, cur)));
+    data.cities.forEach(city => citySelect.append(new Option(city, city)));
 
-      getSelect.innerHTML = "<option value='' selected disabled>Выберите валюту</option>";
-    } catch (err) {
-      console.error(err);
-      showNotification("Не удалось загрузить данные страны.");
-    }
+    // --- Валюта, которую отдаёте ---
+    giveSelect.innerHTML = "";
+    const givePlaceholder = new Option("Выберите валюту", "");
+    givePlaceholder.disabled = true;
+    givePlaceholder.selected = true;
+    giveSelect.append(givePlaceholder);
+
+    const allCurrencies = [...data.currencies_from_crypto, ...data.currencies_from_fiat];
+    allCurrencies.forEach(cur => giveSelect.append(new Option(cur, cur)));
+
+    // --- Валюта, которую получаете ---
+    getSelect.innerHTML = "<option value='' selected disabled>Выберите валюту</option>";
+
+  } catch (err) {
+    console.error(err);
+    showNotification("Не удалось загрузить данные страны.");
+  }
   });
 
   // --- Возможные валюты для получения ---

@@ -3,17 +3,26 @@
 {% block title %}Города для обмена{% endblock %}
 
 {% block content %}
-<h1>🌍 Города для обмена</h1>
+<h1>Города для обмена</h1>
+
 <div class="city-list">
-  {% for country in countries %}
-  <div class="country-block">
-    <h2>{{ country.name }}</h2>
-    <ul>
-      {% for city in country.cities %}
-      <li>{{ city }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endfor %}
+    {% for country in countries %}
+    <div class="country-block">
+        <h2 class="country-name">
+            {% if country.name == "ОАЭ" %}
+                {{ country.name.upper() }}
+            {% else %}
+                {{ country.name|capitalize }}
+            {% endif %}
+        </h2>
+        <ul class="city-ul" style="display: none;">
+            {% for city in country.cities %}
+            <li>{{ city }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
 </div>
+<script src="{{ url_for('static', filename='js/countries.js') }}"></script>
+
 {% endblock %}

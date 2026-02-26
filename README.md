@@ -56,9 +56,11 @@ URL_SITE = "https://URL_SITE"
 
 - GET /api/country/<name> — получить список валют и городов по стране
 - GET /get_rate?give_currency=BTC&get_currency=USDT — получить лучший курс обмена
-- GET /api/history/<user_id> - Получение истории заявок пользователя.
-- GET /api/referral_link/<user_id> - Генерация реферальной ссылки для Telegram WebApp.
-- GET /api/referral/<user_id> - Получение информации о приглашённых пользователем.
+- GET /api/history/<user_id> — получение истории заявок пользователя
+- GET /api/referral_link/<user_id> — генерация реферальной ссылки для Telegram WebApp
+- GET /api/referral/<user_id> — получение информации о приглашённых пользователем
+- GET /api/user/<tg_id> — получение данных пользователя по Telegram ID
+- GET /api/is_admin/<user_id> — проверка, является ли пользователь администратором
 
 ## 🛡️ Валидация и безопасность
 

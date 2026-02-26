@@ -65,7 +65,10 @@
 
         <label>Дата и время посещения офиса</label>
         <input type="datetime-local" name="datetime" id="datetime"
-               value="{{ form.datetime if form else '' }}" required>
+       min="2020-01-01T00:00" max="3000-12-31T23:59"
+       value="{% if form and form.datetime %}{{ form.datetime[:16] }}{% else %}{% endif %}" required>
+
+
         <div id="datetime-warning"></div>
 
         <!-- Скрытые данные пользователя -->

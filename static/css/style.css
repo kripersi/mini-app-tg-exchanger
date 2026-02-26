@@ -1,12 +1,14 @@
 :root {
-  --bg: #17181e;
+  --bg: #000;
   --card: #1c1c1f;
   --accent: #f7a600;
   --accent2: #ffc35c;
+  --accent3: #f78400;
   --muted: #f7c600;
-  --white: #ffffff;
+  --white: #fff;
   --gray: #71757a;
   --yellow: #ffb11a;
+  --blackb: #1d1e23;
 }
 
 * {
@@ -21,8 +23,6 @@ html, body {
   color: var(--white);
   display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 20px;
 }
 
 /* ===== Главная карточка ===== */
@@ -33,23 +33,20 @@ main.card {
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(28,28,31,0.95), rgba(18,18,20,0.95));
   box-shadow: 0 8px 30px rgba(139,92,246,0.12);
-  overflow-wrap: break-word;
-  word-break: break-word;
   overflow: hidden;
+  word-break: break-word;
 }
 
-main.center {
-  text-align: center;
-}
+main.center { text-align: center; }
 
 h1, h2 {
   color: var(--accent);
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
 }
 
 p {
-  color: var(--muted);
-  margin: 6px 0 20px 0;
+  color: var(--white);
+  margin: 6px 0 20px;
 }
 
 /* ===== Поля формы ===== */
@@ -63,20 +60,8 @@ label {
 input[type="text"],
 input[type="email"],
 input[type="datetime-local"],
+input[type="number"],
 select {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  background: #121214;
-  color: var(--white);
-  margin-top: 6px;
-  outline: none;
-  font-size: 15px;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
-}
-
-input[type="number"] {
   width: 100%;
   padding: 12px;
   border-radius: 10px;
@@ -94,7 +79,6 @@ input[type="number"] {
   display: inline-block;
   background: var(--accent);
   color: var(--white);
-  text-decoration: none;
   padding: 12px 20px;
   border-radius: 12px;
   border: none;
@@ -103,16 +87,13 @@ input[type="number"] {
   font-weight: 600;
   font-size: 16px;
   transition: background 0.3s ease;
+  text-decoration: none;
 }
 
-.btn:hover {
-  background: var(--accent2);
-}
+.btn:hover { background: var(--accent2); }
 
 /* ===== Уведомления ===== */
-.flash {
-  margin: 10px 0;
-}
+.flash { margin: 10px 0; }
 
 .flash-item {
   padding: 10px;
@@ -134,7 +115,7 @@ input[type="number"] {
 }
 
 .notification {
-  background-color: #2a223a;
+  background: #2a223a;
   color: #ffdada;
   padding: 12px 16px;
   border-radius: 10px;
@@ -157,36 +138,67 @@ input[type="number"] {
   to { opacity: 1; transform: translateY(0); }
 }
 
-#form-errors {
-  color: var(--accent2);
-  margin-bottom: 10px;
-}
-
-#exchange-section {
-  display: none;
-}
-
-#amount-warning {
-  color: var(--accent2);
-  font-size: 0.9em;
-  margin-top: 4px;
-}
-
-#rate-info {
-  display: block;
-  max-width: 100%;
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-
+#form-errors,
+#amount-warning,
 #datetime-warning {
   color: var(--accent2);
+}
+
+#amount-warning,
+#datetime-warning {
   font-size: 0.9em;
   margin-top: 4px;
 }
 
+#exchange-section { display: none; }
+
+/* ===== Layout ===== */
+.page {
+  background: var(--bg);
+  color: var(--white);
+  width: 100%;
+  padding: 12px;
+  min-height: 100vh;
+}
+
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 8px 0;
+}
+
+.greeting-bar {
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--accent);
+  text-align: right;
+  margin-left: 20px;
+}
+
+.back-btn {
+  background: none;
+  color: var(--accent);
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.back-btn:hover { opacity: 0.7; }
+
+.page h1 {
+  color: var(--accent);
+  font-size: 22px;
+  margin-bottom: 15px;
+}
 
 /* ===== Главное меню ===== */
 .menu {
@@ -201,15 +213,16 @@ input[type="number"] {
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  border: none;
   border-radius: 12px;
   padding: 14px 18px;
   font-size: 16px;
   font-weight: 500;
+  background: var(--blackb);
   color: var(--white);
-  text-align: left;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: 0.25s ease;
+  border: none;
+
 }
 
 .menu-item::after {
@@ -223,109 +236,54 @@ input[type="number"] {
   opacity: 0.9;
 }
 
-.menu-item.yellow {
-  background: var(--accent);
-  color: black;
-}
-
-/* ===== Нижняя навигация ===== */
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  background: #121214;
-  border-top: 1px solid #1f1f1f;
-  padding: 12px 0;
-  border-radius: 14px 14px 0 0;
-  margin-top: 30px;
-}
-
-.bottom-nav button {
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-/* ===== Layout ===== */
-.page {
-  background-color: var(--bg);
-  color: var(--white);
-  max-width: 480px;
-  margin: auto;
-  padding: 20px;
-  min-height: 100vh;
-}
-
-.header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.header-title {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--accent);
-    padding: 8px 0;
-}
-
-.greeting-bar {
-  font-size: 30px;
-  font-weight: 500;
-  color: var(--accent);
-  text-align: right;
-}
-
-.back-btn {
-  background: none;
-  color: var(--accent);
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.back-btn:hover {
-  opacity: 0.7;
-}
-
-.page h1 {
-  color: var(--accent);
-  font-size: 22px;
-  margin-bottom: 15px;
-}
-
-.page p {
-  color: var(--muted);
-  line-height: 1.5;
-}
-
 /* ===== Список городов ===== */
 .city-list .country-block {
-  background: var(--yellow);
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 10px;
-  text-align: left;
+    background: var(--blackb);
+    border-radius: 12px;
+    margin-bottom: 10px;
 }
 
-.country-block h2 {
-  color: black;
-  margin-bottom: 5px;
+.country-name {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    font-size: 16px; /* такой же размер, как у menu-item */
+    font-weight: 500;
+    color: var(--white);
+    padding: 14px 18px; /* такой же padding, как у кнопок */
+    border-radius: 12px;
+    margin-bottom: 4px;
+    background: var(--blackb);
+    cursor: pointer;
+    transition: 0.25s ease;
 }
 
-.country-block ul {
-  list-style: none;
-  padding-left: 10px;
-  margin: 0;
+.country-name:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    opacity: 0.9;
 }
 
-.country-block li {
-  color: black;
-  padding: 4px 0;
+.city-ul {
+    list-style: none;
+    padding-left: 20px;
+    margin: 0 0 10px 0;
 }
+
+.city-ul li {
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--white);
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: var(--blackb);
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
 
 /* ===== Кнопка поддержки ===== */
 .support-btn {
@@ -334,22 +292,20 @@ input[type="number"] {
   color: black;
   padding: 12px 20px;
   border-radius: 10px;
-  text-decoration: none;
   font-weight: 600;
   font-size: 15px;
   margin-top: 15px;
+  text-decoration: none;
   transition: opacity 0.25s ease;
 }
 
-.support-btn:hover {
-  opacity: 0.8;
-}
+.support-btn:hover { opacity: 0.8; }
 
 .profile-btn {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: var(--accent);
+  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,102 +313,92 @@ input[type="number"] {
   color: white;
 }
 
-.profile-btn:hover {
-  opacity: 0.7;
-}
+.profile-btn:hover { opacity: 0.7; }
 
-/* ===== Админка===== */
+/* ===== Ссылки в админке ===== */
 .username a {
-    color: var(--accent);
-    text-decoration: none;
+  color: var(--accent);
+  text-decoration: none;
 }
 
-/* ===== Реферальная страница ===== */
+/* ===== Реферальная ===== */
 .ref-input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 14px;
-    background: white;
-    box-sizing: border-box;
-    overflow-x: auto;
-    white-space: nowrap;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .referral-block {
-    background-color: var(--accent2);
-    color: black;
-    padding: 6px;
-    border-radius: 6px;
-    margin-bottom: 5px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    word-break: break-word;
+  background: var(--accent2);
+  color: black;
+  padding: 6px;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.referral-block p {
-    color: black;
-}
+.referral-block p { color: black; }
 
-/* Заявки просмотр */
+/* ===== Заявки ===== */
 .requests-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
 }
 
 .request-card {
-    display: block;
-    text-decoration: none;
-    background: linear-gradient(90deg, #1c1c1f, #24242a);
-    padding: 14px 18px;
-    border-radius: 12px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    color: var(--white);
-    overflow: hidden;
+  display: block;
+  background: linear-gradient(90deg, #1c1c1f, #24242a);
+  padding: 14px 18px;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+  transition: 0.2s ease;
+  color: var(--white);
+  text-decoration: none;
 }
 
 .request-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
 .request-card-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .request-id {
-    font-weight: 600;
-    font-size: 16px;
-    color: var(--accent);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--accent);
 }
 
 .arrow {
-    font-size: 18px;
-    opacity: 0.6;
+  font-size: 18px;
+  opacity: 0.6;
 }
-
 
 /* кнопка копирования */
 .copy-btn {
-    margin-top: 8px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--accent);
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  width: 100%;
 }
 
-.copy-btn:hover {
-    background-color: var(--accent2);
-}
+.copy-btn:hover { background: var(--accent2); }
 
 /* ===== Мобильная адаптация ===== */
 @media (max-width: 600px) {
@@ -479,17 +425,10 @@ input[type="number"] {
     font-size: 15px;
   }
 
-  h1, h2 {
-    font-size: 20px;
-  }
+  h1, h2 { font-size: 20px; }
 
   .menu-item {
     font-size: 15px;
-    padding: 12px 16px;
-    width: 100%;
-  }
-
-  .bottom-nav {
-    font-size: 12px;
+    padding: 14px 18px;
   }
 }
